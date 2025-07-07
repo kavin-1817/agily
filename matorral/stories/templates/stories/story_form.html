@@ -32,7 +32,7 @@
     {% endfor %}
     </ol>
   {% endif %}
-  <form method="post">{% csrf_token %}
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
     {% for hidden in form.hidden_fields %}
       {{ hidden }}
     {% endfor %}
@@ -48,6 +48,23 @@
           {% endif %}
         </div>
     {% endfor %}
+    <div class="field">
+      <label class="label">Attachments</label>
+      <div class="control">
+        <input type="file" name="files" multiple>
+      </div>
+      <p class="help">You can select multiple files to upload.</p>
+    </div>
+    {% if object and object.attachments.all %}
+      <div class="field">
+        <label class="label">Existing Attachments</label>
+        <ul>
+          {% for attachment in object.attachments.all %}
+            <li><a href="{% url 'stories:story-attachment-download' object.workspace.slug attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download>{{ attachment.filename }}</a>{% if attachment.description %} - {{ attachment.description }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
     <div class="field is-grouped">
       <div class="control">
         <button class="button is-link" type="submit" name="save" value="save">

@@ -9,6 +9,8 @@ from .views import (
     StoryDetailView,
     StoryList,
     StoryUpdateView,
+    upload_story_attachment,
+    download_story_attachment,
 )
 
 app_name = "stories"
@@ -22,4 +24,6 @@ urlpatterns = [
     path("stories/<int:pk>/edit/", StoryUpdateView.as_view(), name="story-edit"),
     path("stories/<int:pk>/", StoryDetailView.as_view(), name="story-detail"),
     path("stories/", StoryList.as_view(), name="story-list"),
+    path('stories/<int:pk>/attachments/upload/', upload_story_attachment, name='story-attachment-upload'),
+    path('attachment/<slug:workspace>/<int:pk>/download/', download_story_attachment, name='story-attachment-download'),
 ]

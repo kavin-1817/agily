@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Add Issue{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section">
+    <h2 class="title">Add Issue</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <h3 class="title is-6">Attachments</h3>
+      <label for="id_files">Attachments</label>
+      <input type="file" name="files" id="id_files" multiple>
+      {{ attachment_form.description.label_tag }} {{ attachment_form.description }}
+      <button class="button is-primary" type="submit">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %} 

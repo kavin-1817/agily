@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Issues for {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section">
+    <h2 class="title">Issues for {{ project.name }}</h2>
+    <form method="get" class="mb-4">
+      <div class="field has-addons">
+        <div class="control">
+          <input class="input" type="number" name="id" placeholder="Search by Issue ID..." value="{{ request.GET.id }}">
+        </div>
+        <div class="control">
+          <button class="button is-info" type="submit">Search</button>
+        </div>
+      </div>
+    </form>
+    {% if global_issues %}
+      <a class="button is-success mb-2" href="{% url 'global-issue-add' %}">Add Issue</a>
+    {% else %}
+      <a class="button is-success mb-2" href="{% url 'issue-add' project.pk %}">Add Issue</a>
+    {% endif %}
+    <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          {% if global_issues %}<th>Project</th>{% endif %}
+          <th>Status</th>
+          <th>Severity</th>
+          <th>Requester</th>
+          <th>Assignee</th>
+          <th>Created</th>
+          <th>Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for issue in issues %}
+        <tr>
+          <td>{{ issue.id }}</td>
+          <td><a href="{% if global_issues %}{% url 'issue-detail' issue.project.pk issue.pk %}{% else %}{% url 'issue-detail' project.pk issue.pk %}{% endif %}">{{ issue.title }}</a></td>
+          {% if global_issues %}<td>{{ issue.project.name }}</td>{% endif %}
+          <td>{{ issue.get_status_display }}</td>
+          <td>{{ issue.get_severity_display }}</td>
+          <td>{{ issue.requester }}</td>
+          <td>{{ issue.assignee }}</td>
+          <td>{{ issue.created_at|date:'Y-m-d H:i:s' }}</td>
+          <td>{{ issue.updated_at|date:'Y-m-d H:i:s' }}</td>
+          <td>
+            <a class="button is-small is-link" href="{% if global_issues %}{% url 'issue-detail' issue.project.pk issue.pk %}{% else %}{% url 'issue-detail' project.pk issue.pk %}{% endif %}">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10">No issues found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %} 

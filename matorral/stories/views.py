@@ -2,16 +2,21 @@ from itertools import groupby
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Max, F
-from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect, FileResponse, Http404
+from django.urls import reverse_lazy, reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+import mimetypes
+import os
+from django.utils.encoding import smart_str
 
 from matorral.views import BaseListView
 from matorral.sprints.models import Sprint
-from matorral.stories.forms import EpicFilterForm, EpicGroupByForm, StoryFilterForm, EpicForm, StoryForm
-from matorral.stories.models import Epic, Story
+from matorral.stories.forms import EpicFilterForm, EpicGroupByForm, StoryFilterForm, EpicForm, StoryForm, StoryAttachmentForm
+from matorral.stories.models import Epic, Story, StoryAttachment
 from matorral.stories.tasks import (
     duplicate_epics,
     duplicate_stories,
@@ -154,8 +159,17 @@ class StoryCreateView(StoryBaseView, CreateView):
     def post(self, *args, **kwargs):
         kwargs = self.get_form_kwargs()
         kwargs["data"] = self.request.POST
+        kwargs["files"] = self.request.FILES
         form = self.get_form_class()(**kwargs)
-        return self.form_valid(form)
+        if form.is_valid():
+            response = self.form_valid(form)
+            # Handle file attachments
+            files = self.request.FILES.getlist('files')
+            for f in files:
+                StoryAttachment.objects.create(story=form.instance, file=f)
+            return response
+        else:
+            return self.form_invalid(form)
 
     def get_form_class(self):
         return StoryForm
@@ -172,12 +186,21 @@ class StoryUpdateView(StoryBaseView, UpdateView):
     def post(self, *args, **kwargs):
         kwargs = self.get_form_kwargs()
         kwargs["data"] = self.request.POST
+        kwargs["files"] = self.request.FILES
 
         if not kwargs.get("save-as-new"):
             kwargs["instance"] = self.get_object()
 
         form = self.get_form_class()(**kwargs)
-        return self.form_valid(form)
+        if form.is_valid():
+            response = self.form_valid(form)
+            # Handle file attachments
+            files = self.request.FILES.getlist('files')
+            for f in files:
+                StoryAttachment.objects.create(story=form.instance, file=f)
+            return response
+        else:
+            return self.form_invalid(form)
 
     def get_form_class(self):
         return StoryForm
@@ -307,6 +330,11 @@ class StoryList(BaseListView):
     select_related = ["requester", "assignee", "state", "sprint"]
     prefetch_related = ["tags"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        workspace_slug = self.kwargs["workspace"]
+        return qs.filter(workspace__slug=workspace_slug)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["filters_form"] = StoryFilterForm(self.request.POST)
@@ -394,3 +422,36 @@ class StoryDetailView(DetailView):
 
         url = self.request.get_full_path()
         return HttpResponseRedirect(url)
+
+
+def upload_story_attachment(request, workspace, pk):
+    story = get_object_or_404(Story, pk=pk, workspace__slug=workspace)
+    if request.method == "POST":
+        form = StoryAttachmentForm(request.POST, request.FILES)
+        if form.is_valid():
+            attachment = form.save(commit=False)
+            attachment.story = story
+            attachment.save()
+            messages.success(request, "Attachment uploaded successfully.")
+            return redirect(reverse("stories:story-detail", args=[workspace, pk]))
+    else:
+        form = StoryAttachmentForm()
+    return render(request, "stories/story_attachment_form.html", {"form": form, "story": story})
+
+
+def download_story_attachment(request, workspace, pk):
+    from .models import StoryAttachment
+    try:
+        attachment = StoryAttachment.objects.get(pk=pk)
+    except StoryAttachment.DoesNotExist:
+        raise Http404
+
+    file_handle = attachment.file.open('rb')
+    filename = os.path.basename(attachment.file.name)
+    response = FileResponse(file_handle, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{smart_str(filename)}"'
+    response['Content-Length'] = attachment.file.size
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response

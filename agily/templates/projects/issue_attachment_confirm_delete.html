@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Delete Attachment</h2>
+  <p>Are you sure you want to delete the attachment: <strong>{{ attachment.filename }}</strong>?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="button is-danger">Delete</button>
+    <a href="{% url 'issue-detail' pk=attachment.issue.pk %}" class="button">Cancel</a>
+  </form>
+{% endblock %} 

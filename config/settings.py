@@ -1,5 +1,5 @@
 """
-Django settings for matorral project.
+Django settings for agily project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/dev/topics/settings/
@@ -14,9 +14,10 @@ import sys
 import environ
 
 from celery.schedules import crontab
+from django.contrib.messages import constants as messages
 
-ROOT_DIR = environ.Path(__file__) - 2  # (matorral/config/settings/common.py - 2 = matorral/)
-APPS_DIR = ROOT_DIR.path("matorral")
+ROOT_DIR = environ.Path(__file__) - 2  # (agily/config/settings/common.py - 2 = agily/)
+APPS_DIR = ROOT_DIR.path("agily")
 
 env = environ.Env()
 environ.Env.read_env(env_file="config/.env")  # reading .env file
@@ -62,11 +63,12 @@ THIRD_PARTY_APPS = (
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
-    "matorral.users",  # custom users app
+    "agily",
+    "agily.users",  # custom users app
     # Your stuff: custom apps go here
-    "matorral.workspaces",
-    "matorral.sprints",
-    "matorral.stories",
+    "agily.workspaces",
+    "agily.sprints",
+    "agily.stories",
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -83,12 +85,12 @@ MIDDLEWARE = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
-    "matorral.workspaces.middlewares.WorkspaceMiddleware",
+    "agily.workspaces.middlewares.WorkspaceMiddleware",
 )
 
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
-MIGRATION_MODULES = {"sites": "matorral.contrib.sites.migrations"}
+MIGRATION_MODULES = {"sites": "agily.contrib.sites.migrations"}
 
 # DEBUG
 # ------------------------------------------------------------------------------
@@ -103,8 +105,8 @@ FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
 EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
-DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="matorral <noreply@localhost>")
-EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[matorral] ")
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="agily <noreply@localhost>")
+EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[agily] ")
 SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
 # MANAGER CONFIGURATION
@@ -119,9 +121,15 @@ MANAGERS = ADMINS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    "default": env.db("DJANGO_DATABASE_URL", default="sqlite:///matorral.db"),
+    "default": env.db("DJANGO_DATABASE_URL", default="mysql://root:password@localhost:3306/agily"),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
+# MySQL specific settings
+DATABASES["default"]["OPTIONS"] = {
+    "charset": "utf8mb4",
+    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+}
 
 
 # GENERAL CONFIGURATION
@@ -177,9 +185,10 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 # Your stuff: custom template context processors go here
-                "matorral.context_processors.site",
-                "matorral.context_processors.navigation",
-                "matorral.context_processors.search",
+                "agily.context_processors.site",
+                "agily.context_processors.navigation",
+                "agily.context_processors.search",
+                "agily.context_processors.current_workspace",
             ],
         },
     },
@@ -226,9 +235,9 @@ AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # cookies
-LANGUAGE_COOKIE_NAME = "matorral-lang"
-CSRF_COOKIE_NAME = "matorral-csrf"
-SESSION_COOKIE_NAME = "matorral-session"
+LANGUAGE_COOKIE_NAME = "agily-lang"
+CSRF_COOKIE_NAME = "agily-csrf"
+SESSION_COOKIE_NAME = "agily-session"
 
 FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
@@ -238,20 +247,20 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
-ACCOUNT_ADAPTER = "matorral.users.adapters.AccountAdapter"
-SOCIALACCOUNT_ADAPTER = "matorral.users.adapters.SocialAccountAdapter"
+ACCOUNT_ADAPTER = "agily.users.adapters.AccountAdapter"
+SOCIALACCOUNT_ADAPTER = "agily.users.adapters.SocialAccountAdapter"
 
 # Custom user app defaults
 # Select the correct user model
 AUTH_USER_MODEL = "users.User"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/workspaces/select/"
 LOGIN_URL = "login"
 
 # SLUGLIFIER
 AUTOSLUG_SLUGIFY_FUNCTION = "slugify.slugify"
 
 # CELERY
-INSTALLED_APPS += ("matorral.taskapp.celery.CeleryConfig",)
+INSTALLED_APPS += ("agily.taskapp.celery.CeleryConfig",)
 BROKER_URL = env("CELERY_BROKER_URL", default="amqp://")
 CELERY_TIMEZONE = "UTC"
 CELERY_ACCEPT_CONTENT = ["msgpack"]
@@ -269,7 +278,7 @@ CELERY_ROUTES = {}
 # Location of root django.contrib.admin URL, use {% url 'admin:index' %}
 ADMIN_URL = re.sub("^/", "^", env("DJANGO_ADMIN_URL", default="^admin/"))
 
-USER_AGENT = env("USER_AGENT", default="matorral/0.1.0")
+USER_AGENT = env("USER_AGENT", default="agily/0.1.0")
 
 WATCHMAN_CHECKS = (
     "watchman.checks.caches",
@@ -302,7 +311,7 @@ LOGGING = {
     "loggers": {
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": True},
         "django.security.DisallowedHost": {"level": "ERROR", "handlers": ["console"], "propagate": True},
-        "matorral": {
+        "agily": {
             "handlers": ["console"],
             "level": env("LOGGING_LOGGER_LEVEL", default="ERROR"),
             "formatter": "verbose",
@@ -335,7 +344,7 @@ COMMENTS_XTD_MAX_THREAD_LEVEL = 2
 CELERY_ALWAYS_EAGER = env.bool("CELERY_ALWAYS_EAGER", default=False)
 
 CELERYBEAT_SCHEDULE = {
-    "sprints-update-state": {"task": "matorral.sprints.tasks.update_state", "schedule": crontab(hour="*/1")},
+    "sprints-update-state": {"task": "agily.sprints.tasks.update_state", "schedule": crontab(hour="*/1")},
 }
 
 # Tagulous settings
@@ -384,3 +393,11 @@ else:
 # if we are running tests, we want to use a fast hasher
 if sys.argv[1:2] == ["test"]:
     PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'info',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}

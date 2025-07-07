@@ -139,8 +139,7 @@ class WorkspaceBaseView:
 
     @property
     def success_url(self):
-        workspace = self.kwargs["workspace"]
-        return get_clean_next_url(self.request, reverse_lazy("workspaces:workspace-list", args=[workspace]))
+        return get_clean_next_url(self.request, reverse_lazy("workspaces:workspace-list"))
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -154,7 +153,8 @@ class WorkspaceBaseView:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        workspace = self.kwargs["workspace"]
+        workspace = self.kwargs.get("workspace")
+        if workspace:
         workspace_add_url = reverse_lazy("workspaces:workspace-add", args=[workspace])
         context["workspace_add_url"] = workspace_add_url
         context["current_workspace"] = workspace
@@ -164,10 +164,12 @@ class WorkspaceBaseView:
 @method_decorator(login_required, name="dispatch")
 class WorkspaceCreateView(WorkspaceBaseView, CreateView):
 
-    def post(self, *args, **kwargs):
-        data = dict(parse_qsl(self.request.body.decode("utf-8")))
-        form = self.get_form_class()(data)
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
         return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -192,4 +194,7 @@ class WorkspaceUpdateView(WorkspaceBaseView, UpdateView):
 @login_required
 def workspace_index(request):
     default_workspace = request.user.workspace_set.order_by("id").first()
+    if not default_workspace:
+        # Redirect to workspace creation page if user has no workspaces
+        return HttpResponseRedirect(reverse_lazy("workspaces:workspace-add"))
     return HttpResponseRedirect(reverse_lazy("stories:story-list", args=[default_workspace.slug]))

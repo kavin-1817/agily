@@ -1,0 +1,58 @@
+{% extends 'stories/base.html' %}
+
+{% block page_title %}Stories{% endblock %}
+
+{% block content %}
+<div class="container">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block table_head_content %}
+  <tr>
+    <th><input type="checkbox" class="selectAll" /></th>
+    <th><abbr title="Identification Number">ID</abbr></th>
+    <th>Title</th>
+    <th>State</th>
+    <th>Points</th>
+    <th>Epic</th>
+    <th>Sprint</th>
+    <th>Assignee</th>
+    <th>Updated</th>
+    <th>Actions</th>
+  </tr>
+{% endblock %}
+
+{% block table_body_content %}
+  {% for story in object_list %}
+    <tr {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
+      <td><input type="checkbox" name="story-{{ story.id }}" /></td>
+      <td>#{{ story.id }}</td>
+      <td>
+        <a href="{% url 'stories:story-detail' current_workspace story.id %}" {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
+          <strong>{{ story.title }}</strong>
+        </a>
+      </td>
+      <td>{{ story.state }}</td>
+      <td>{{ story.points }}</td>
+      <td>{% if story.epic %}{{ story.epic.title }}{% endif %}</td>
+      <td>{% if story.sprint %}{{ story.sprint.title }}{% endif %}</td>
+      <td>{% if story.assignee %}{{ story.assignee }}{% endif %}</td>
+      <td>{{ story.updated_at|date:"Y-m-d H:i" }}</td>
+      <td>
+        <a class="button is-small is-link is-outlined" href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit">
+          <span class="icon is-small">
+            <i class="fas fa-edit"></i>
+          </span>
+          <small>edit</small>
+        </a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="10">No stories found.</td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block object_add_url %}{% url 'stories:story-add' current_workspace %}{% endblock %}
