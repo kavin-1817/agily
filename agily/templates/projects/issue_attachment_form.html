@@ -3,8 +3,28 @@
   <h2>Upload Attachment for Issue: {{ issue.title }}</h2>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="button is-primary">Upload</button>
-    <a href="{% url 'issue-detail' pk=issue.pk %}" class="button">Cancel</a>
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+    {% for field in form.visible_fields %}
+        <div class="field">
+          {{ field.errors }}
+          <label class="label">{{ field.label_tag }}</label>
+          <div class="control">
+            {{ field }}
+          </div>
+          {% if field.help_text %}
+            <p class="help">{{ field.help_text|safe }}</p>
+          {% endif %}
+        </div>
+    {% endfor %}
+    <div class="field is-grouped">
+      <div class="control">
+        <button type="submit" class="button is-primary">Upload</button>
+      </div>
+      <div class="control">
+        <a href="{% url 'issue-detail' pk=issue.pk %}" class="button">Cancel</a>
+      </div>
+    </div>
   </form>
 {% endblock %} 

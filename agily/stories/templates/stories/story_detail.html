@@ -24,12 +24,14 @@
 		<!-- Right side -->
 		<div class="level-right">
 			<div class="level-item">
+        {% if user.is_superuser or is_project_admin %}
         <a href="{% url 'stories:story-edit' current_workspace object.id %}?next={{ encoded_url }}" class="button is-link">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
           </span>
           <small>Edit</small>
-				</a>
+        </a>
+        {% endif %}
 			</div>
 
 			<div class="level-item">
@@ -52,154 +54,156 @@
 		</div>
 	</nav>
 
-	<div class="card">
-		<div class="card-content">
-			<div class="media">
-				<div class="media-content">
-					<p class="subtitle is-6">
-						<a href="{{ object.product_backlog.get_absolute_url }}" title="Product Backlog">
-							<span class="icon is-small">
-								<i class="fas fa-bookmark" aria-hidden="true"></i>
-							</span>
-							<span>{{ object.product_backlog.title }}</span> <!-- Product Backlog -->
-						</a> - @{{ object.requester }} {% if object.assignee %}- assigned to {{ object.assignee }}{% endif %}
-					</p>
-				</div>
-			</div>
+	<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10);">
+  <div class="card-content" style="background: #f8fafc; border-radius: 12px;">
+    <div style="max-width: 700px; width: 100%; display: flex; flex-direction: column; gap: 1.2em; align-items: flex-start;">
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-heading"></i></span> Title
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.title }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-bookmark"></i></span> Product Backlog
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.epic.title }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-user"></i></span> Requester
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.requester }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-user-check"></i></span> Assignee
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.assignee|default:'—' }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-flag"></i></span> State
+        </div>
+        <div style="margin-left: 0.5em;">: <span class="tag is-info is-light" style="font-size:1em;">{{ object.state }}</span></div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-bolt"></i></span> Priority
+        </div>
+        <div style="margin-left: 0.5em;">: <span class="tag is-warning is-light" style="font-size:1em;">{% if object.priority == 2 %}High{% elif object.priority == 1 %}Medium{% else %}Low{% endif %}</span></div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-star"></i></span> Points
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.points }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-clock"></i></span> Last Update
+        </div>
+        <div style="margin-left: 0.5em;">: <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-align-left"></i></span> Description
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="content" style="background: #fff; border-radius: 8px; padding: 1em 1.2em; border: 1px solid #e5e7eb; min-height: 60px; width: 100%;  word-break: break-word;min-width: 600px;">
+            {{ object.description|default:'' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card attachments-section" style="margin-bottom: 2rem; background: #f3f4f6; box-shadow: 0 2px 12px 0 rgba(71,85,105,0.08);">
+  <div class="card-content">
+    <div class="level">
+      <div class="level-left">
+        <h3 class="title is-6" style="color:#2A2D64;">
+          <span class="icon is-small">
+            <i class="fas fa-paperclip"></i>
+          </span>
+          Attachments ({{ object.attachments.count }})
+        </h3>
+      </div>
+      <div class="level-right">
+        <!-- Upload attachment button removed -->
+      </div>
+    </div>
+    {% if object.attachments.all %}
+    <div class="table-container">
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            <th style="width: 40%;">File</th>
+            <th style="width: 15%;">Size</th>
+            <th style="width: 20%;">Uploaded</th>
+            <th style="width: 25%;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for attachment in object.attachments.all %}
+          <tr>
+            <td>
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-small">
+                    <i class="fas fa-file"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <div>
+                    <a href="{% url 'stories:story-attachment-download' object.workspace.slug attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download class="has-text-link" data-hx-boost="false" data-hx-ignore="true">
+                      {{ attachment.filename }}
+                    </a>
+                  </div>
+                  {% if attachment.description %}
+                  <div class="has-text-grey is-size-7">
+                    {{ attachment.description }}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td><span class="has-text-grey">{{ attachment.file.size|filesizeformat }}</span></td>
+            <td><span class="has-text-grey is-size-7"><time datetime="{{ attachment.uploaded_at }}">{{ attachment.uploaded_at|date:"M j, Y" }}</time></span></td>
+            <td>
+              <div class="buttons are-small">
+                <a href="{% url 'stories:story-attachment-delete' workspace=current_workspace pk=attachment.pk %}" class="button is-danger is-small">
+                  <span class="icon is-small">
+                    <i class="fas fa-trash"></i>
+                  </span>
+                  <span>Delete</span>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="notification is-light">
+      <p class="has-text-grey">
+        <span class="icon is-small">
+          <i class="fas fa-info-circle"></i>
+        </span>
+        No attachments uploaded yet.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
 
-			<div class="content">
-				{{ object.description|default:''|to_html }}<br/><br/>
-				<div class="field is-grouped is-grouped-multiline">
-					<div class="control">
-						<div class="tags has-addons">
-							<span class="tag">State</span>
-							<span class="tag is-primary">{{ object.state }}</span>
-						</div>
-					</div>
-					<div class="control">
-						<div class="tags has-addons">
-							<span class="tag">Priority</span>
-							<span class="tag is-link">{{ object.priority }}</span>
-						</div>
-					</div>
-					{% for tag in object.product_backlog.tags.all %}
-					<div class="control">
-						<div class="tags has-addons">
-							<span class="tag is-dark">#</span>
-							<span class="tag is-light">{{ tag.name }}</span>
-						</div>
-					</div>
-					{% endfor %}
-				</div>
-				<strong>Last Update:</strong> <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time>
-			</div>
-			<!-- Attachments inside the card -->
-			<div class="attachments-section">
-				<div class="level">
-					<div class="level-left">
-						<h3 class="title is-5">
-							<span class="icon is-small">
-								<i class="fas fa-paperclip"></i>
-							</span>
-							Attachments ({{ object.attachments.count }})
-						</h3>
-					</div>
-					<div class="level-right">
-						<a href="{% url 'stories:story-attachment-upload' object.workspace.slug object.id %}" class="button is-primary is-small">
-							<span class="icon is-small">
-								<i class="fas fa-upload"></i>
-							</span>
-							<span>Upload Attachment</span>
-						</a>
-					</div>
-				</div>
-				{% if object.attachments.all %}
-				<div class="table-container">
-					<table class="table is-fullwidth is-striped is-hoverable">
-						<thead>
-							<tr>
-								<th style="width: 40%;">File</th>
-								<th style="width: 15%;">Size</th>
-								<th style="width: 20%;">Uploaded</th>
-								<th style="width: 25%;">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for attachment in object.attachments.all %}
-							<tr>
-								<td>
-									<div class="media">
-										<div class="media-left">
-											<span class="icon is-small">
-												<i class="fas fa-file"></i>
-											</span>
-										</div>
-										<div class="media-content">
-											<div>
-												<a href="{% url 'stories:story-attachment-download' object.workspace.slug attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" 
-												   download 
-												   onclick="event.preventDefault(); forceDownload(this.href, '{{ attachment.filename }}');"
-												   class="has-text-link">
-													{{ attachment.filename }}
-												</a>
-											</div>
-													{% if attachment.description %}
-													<div class="has-text-grey is-size-7">
-														{{ attachment.description }}
-													</div>
-													{% endif %}
-										</div>
-									</div>
-								</td>
-								<td>
-									<span class="has-text-grey">{{ attachment.file.size|filesizeformat }}</span>
-								</td>
-								<td>
-									<span class="has-text-grey is-size-7">
-										<time datetime="{{ attachment.uploaded_at }}">{{ attachment.uploaded_at|date:"M j, Y" }}</time>
-									</span>
-								</td>
-								<td>
-									<div class="buttons are-small">
-										<form method="post" action="{% url 'stories:story-attachment-delete' workspace=current_workspace pk=attachment.pk %}" style="display:inline;">
-											{% csrf_token %}
-											<button type="submit" class="button is-danger is-small" 
-													onclick="return confirm('Are you sure you want to delete this attachment?')">
-												<span class="icon is-small">
-													<i class="fas fa-trash"></i>
-												</span>
-												<span>Delete</span>
-											</button>
-										</form>
-									</div>
-								</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
-				{% else %}
-				<div class="notification is-light">
-					<p class="has-text-grey">
-						<span class="icon is-small">
-							<i class="fas fa-info-circle"></i>
-						</span>
-						No attachments uploaded yet.
-					</p>
-				</div>
-				{% endif %}
-			</div>
-		</div>
-	</div>
+{% endblock %}
 
 <script>
-function forceDownload(url, filename) {
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+function postForm(form, button) {
+  form.submit();
+  return false;
 }
 </script>
-{% endblock %}

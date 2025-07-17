@@ -3,15 +3,99 @@
 {% block page_title %}Stories{% endblock %}
 
 {% block content %}
-<div class="container">
-  {{ block.super }}
-</div>
+  <div class="container">
+    <div class="section">
+      <div class="level" style="margin-bottom: 1em;">
+        <div class="level-left">
+          <h2 class="title" style="margin-right: 1.5em;">Stories</h2>
+          <form method="get" class="level-item" style="margin-bottom: 0; display: flex; align-items: center;">
+            <input class="input" type="text" name="q" placeholder="Search for..." value="{{ request.GET.q }}" style="max-width: 300px;">
+            <button class="button is-success" type="submit" style="margin-left: 0.5em;">
+              <span class="icon is-small">
+                <i class="fas fa-search"></i>
+              </span>
+              <small>Search</small>
+            </button>
+          </form>
+        </div>
+        <div class="level-right">
+          <form method="get" class="level-item" style="margin-right: 1em; display: flex; align-items: center; gap: 0.5em;">
+            <label for="project-filter" style="font-weight: 600; margin-bottom: 0; font-size: 0.98em;">Project:</label>
+            <div class="select" style="max-width: 120px; font-size: 0.98em;">
+              <select name="project" id="project-filter" style="min-width: 80px; font-size: 0.98em; padding: 0.3em 0.7em;">
+                <option value="">All</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}" {% if project.id|stringformat:'s' == selected_project_id|stringformat:'s' %}selected{% endif %}>{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="button is-link" style="padding: 0.3em 0.9em; font-size: 0.98em;">Filter</button>
+          </form>
+          {% if is_tester or is_project_admin or user.is_superuser %}
+            <a class="button is-primary" href="{% url 'stories:story-add' current_workspace %}">
+              <span class="icon is-small"><i class="fas fa-plus"></i></span>
+              <small>Create</small>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>State</th>
+            <th>Points</th>
+            <th>Epic</th>
+            <th>Sprint</th>
+            <th>Assignee</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for story in object_list %}
+            <tr {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
+              <td>#{{ story.id }}</td>
+              <td>
+                
+                  <b>{{ story.title }}</b>
+                
+              </td>
+              <td>{{ story.state }}</td>
+              <td>{{ story.points }}</td>
+              <td>{% if story.epic %}{{ story.epic.title }}{% endif %}</td>
+              <td>{% if story.sprint %}{{ story.sprint.title }}{% endif %}</td>
+              <td>{% if story.assignee %}{{ story.assignee }}{% endif %}</td>
+              
+              <td>{{ story.updated_at|date:"Y-m-d H:i" }}</td>
+              <td>
+                <a href="{% url 'stories:story-detail' current_workspace story.id %}?next={{ encoded_url }}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
+                {% if is_tester or is_project_admin or user.is_superuser %}
+                  <a href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
+                  <form method="post" action="{% url 'stories:story-delete' current_workspace story.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this story?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class='fas fa-trash' style='color:white;'></i></button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9">No stories found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <br/>
+      {% include "paginator.html" %}
+    </div>
+  </div>
 {% endblock %}
 
 {% block table_head_content %}
   <tr>
-    <th><input type="checkbox" class="selectAll" /></th>
-    <th><abbr title="Identification Number">ID</abbr></th>
+    <th>ID</th>
     <th>Title</th>
     <th>State</th>
     <th>Points</th>
@@ -26,33 +110,56 @@
 {% block table_body_content %}
   {% for story in object_list %}
     <tr {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
-      <td><input type="checkbox" name="story-{{ story.id }}" /></td>
       <td>#{{ story.id }}</td>
       <td>
-        <a href="{% url 'stories:story-detail' current_workspace story.id %}" {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
+        
           <strong>{{ story.title }}</strong>
-        </a>
+        
       </td>
       <td>{{ story.state }}</td>
       <td>{{ story.points }}</td>
       <td>{% if story.epic %}{{ story.epic.title }}{% endif %}</td>
       <td>{% if story.sprint %}{{ story.sprint.title }}{% endif %}</td>
       <td>{% if story.assignee %}{{ story.assignee }}{% endif %}</td>
+      <td>{{ story.priority }}</td>
       <td>{{ story.updated_at|date:"Y-m-d H:i" }}</td>
       <td>
-        <a class="button is-small is-link is-outlined" href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit">
-          <span class="icon is-small">
-            <i class="fas fa-edit"></i>
-          </span>
-          <small>edit</small>
-        </a>
+        <a class="button is-small is-link is-outlined" href="{% url 'stories:story-detail' current_workspace story.id %}" title="View" style="min-width:2.5em; background:#8FA01F !important; color:white !important;"><span class="icon is-small"><i class="fas fa-eye"></i></span></a>
+        {% if is_tester or is_project_admin or user.is_superuser %}
+          <a class="button is-small is-link is-outlined" href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit" style="min-width:2.5em;">
+            <span class="icon is-small">
+              <i class="fas fa-edit"></i>
+            </span>
+          </a>
+          <form method="post" action="{% url 'stories:story-delete' current_workspace story.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button class="button is-small is-link is-outlined" type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this story?');" style="min-width:2.5em;">
+              <span class="icon is-small">
+                <i class="fas fa-trash"></i>
+              </span>
+            </button>
+          </form>
+        {% endif %}
       </td>
     </tr>
   {% empty %}
     <tr>
-      <td colspan="10">No stories found.</td>
+      <td colspan="9">No stories found.</td>
     </tr>
   {% endfor %}
 {% endblock %}
 
-{% block object_add_url %}{% url 'stories:story-add' current_workspace %}{% endblock %}
+{% block object_add_url %}
+  {% if user.is_superuser or not is_project_admin %}
+    {% url 'stories:story-add' current_workspace %}
+  {% endif %}
+{% endblock %}
+
+{% block show_create_button %}
+  {% if is_tester or is_project_admin or user.is_superuser %}
+    <a class="button is-primary" href="{% url 'stories:story-add' current_workspace %}">
+      <span class="icon is-small"><i class="fas fa-plus"></i></span>
+      <small>Create</small>
+    </a>
+  {% endif %}
+{% endblock %}

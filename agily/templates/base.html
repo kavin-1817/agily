@@ -13,19 +13,23 @@
     <link rel="stylesheet" href="{% static 'css/bulma-checkradio.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/default.css' %}">
     <!-- softwig.css removed: using only default and Bulma UI -->
+    <link rel="stylesheet" href="{% static 'css/modern.css' %}">
     <style>
       table .level-item.bulk-action { visibility: hidden; }
+      .navbar-logo {
+        height: 2.2rem;
+        display: block;
+        /* Add more styles here if you update the logo file */
+      }
     </style>
     <script defer src="{% static 'js/htmx.min.js' %}"></script>
   </head>
   <body hx-boost="true">
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and not hide_main_menu %}
     <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
       <div class="navbar-brand">
-        <a class="navbar-item" href="/">
-            <h1 class="title has-text-white-bis">
-              Agily
-            </h1>
+        <a class="navbar-item" href="{% url 'project-list' %}" style="padding: 0.5rem 1rem;">
+            <h1 class="title has-text-white-bis" style="font-size: 1.7rem; font-weight: 700; margin: 0; letter-spacing: 0.01em;">Agily</h1>
         </a>
 
         <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
@@ -58,9 +62,9 @@
               <div class="buttons">
                 <div class="navbar-item has-dropdown is-hoverable">
                   <a class="navbar-link" href="#">
-                    {{ user.username }}
+                    <span class="account-name">{{ user.username }}</span>
+                    <span class="account-arrow"><i class="fas fa-chevron-down"></i></span>
                   </a>
-
                   <div class="navbar-dropdown">
                     {% if user.is_staff %}
                     <a class="navbar-item" href="{% url 'admin:index' %}" target="_blank">
@@ -74,6 +78,7 @@
                       </button>
                     </form>
                   </div>
+                </div>
               </div>
             </div>
           </div>
@@ -98,54 +103,193 @@
 
     <footer class="footer">
       <div class="content has-text-centered">
-        <!-- Footer removed as requested -->
+        <p style="color: #555; font-size: 1em;">
+          &copy; Softtwig Technology Solutions OPC Pvt Ltd
+        </p>
       </div>
     </footer>
-  </body>
 
-  <script defer src="{% static 'js/bulma-calendar.min.js' %}" data-mutate-approach="sync"></script>
-  <script defer src="{% static 'js/bulma-tagsinput.min.js' %}" data-mutate-approach="sync"></script>
-  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js" data-mutate-approach="sync"></script>
-  <script>
-    function ready(fn) {
-      if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading"){
-        fn();
-      } else {
-        document.addEventListener('DOMContentLoaded', fn);
+    <script defer src="{% static 'js/bulma-calendar.min.js' %}" data-mutate-approach="sync"></script>
+    <script defer src="{% static 'js/bulma-tagsinput.min.js' %}" data-mutate-approach="sync"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js" data-mutate-approach="sync"></script>
+    <script>
+      function ready(fn) {
+        if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading"){
+          fn();
+        } else {
+          document.addEventListener('DOMContentLoaded', fn);
+        }
       }
-    }
 
-    ready(function() {
-      bulmaTagsinput.attach('[data-tagulous="true"]');
-      bulmaCalendar.attach('#id_starts_at', {type: 'date'});
-      bulmaCalendar.attach('#id_ends_at', {type: 'date'});
+      ready(function() {
+        bulmaTagsinput.attach('[data-tagulous="true"]');
+        // bulmaCalendar.attach('#id_starts_at', {type: 'date'});
+        // bulmaCalendar.attach('#id_ends_at', {type: 'date'});
 
-      // Bulma navbar burger menu toggle
-      var $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
-      if ($navbarBurgers.length > 0) {
-        $navbarBurgers.forEach(function ($el) {
-          $el.addEventListener('click', function () {
-            var target = $el.dataset.target;
-            var $target = document.getElementById(target);
-            $el.classList.toggle('is-active');
-            if ($target) {
-              $target.classList.toggle('is-active');
+        // Bulma navbar burger menu toggle
+        var $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+        if ($navbarBurgers.length > 0) {
+          $navbarBurgers.forEach(function ($el) {
+            $el.addEventListener('click', function () {
+              var target = $el.dataset.target;
+              var $target = document.getElementById(target);
+              $el.classList.toggle('is-active');
+              if ($target) {
+                $target.classList.toggle('is-active');
+              }
+            });
+          });
+        }
+
+        // Add confirmation dialog for all delete/remove buttons
+        document.addEventListener('click', function(event) {
+          // DISABLED GLOBAL CONFIRMATION DIALOG: Using server-side token verification instead
+          return;
+          
+          /*
+          // Target all buttons with name="remove" or class="is-danger"
+          if ((event.target.tagName === 'BUTTON' && 
+               (event.target.name === 'remove' || 
+                event.target.classList.contains('is-danger'))) ||
+              (event.target.closest('button') && 
+               (event.target.closest('button').name === 'remove' || 
+                event.target.closest('button').classList.contains('is-danger')))) {
+                
+            // Get the button element
+            const button = event.target.tagName === 'BUTTON' ? event.target : event.target.closest('button');
+            
+            // Skip if the button already has a confirmation handler, has data-no-confirm attribute, or has an onclick with confirm
+            if (button.hasAttribute('data-has-confirm') || 
+                button.hasAttribute('data-no-confirm') ||
+                button.getAttribute('onclick')?.includes('confirm(')) {
+              // Remove the data-has-confirm attribute to prevent infinite loops
+              button.removeAttribute('data-has-confirm');
+              
+              // If the button has an onclick handler with confirm, we'll disable our global handler and let the inline one work
+              if (button.getAttribute('onclick')?.includes('confirm(')) {
+                // Remove the original onclick handler after the first click to prevent multiple confirms
+                const originalOnclick = button.getAttribute('onclick');
+                button.setAttribute('data-original-onclick', originalOnclick);
+                button.removeAttribute('onclick');
+              }
+              return;
             }
+            
+            // Prevent the default action
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Get the appropriate message based on the button context
+            let confirmMessage = 'Are you sure you want to delete this item?';
+            
+            // Show confirmation dialog
+            if (confirm(confirmMessage)) {
+              // If confirmed, proceed with the action
+              
+              // Mark button to prevent double confirmation
+              button.setAttribute('data-has-confirm', 'true');
+              
+              // Also disable the button to prevent double submission
+              button.disabled = true;
+              // Visual feedback - fade the button
+              button.style.opacity = '0.5';
+              
+              // For HTMX boosted forms/buttons
+              if (button.form) {
+                // For form submit buttons
+                const form = button.form;
+                
+                // If using HTMX, we need to handle it differently
+                if (document.body.hasAttribute('hx-boost')) {
+                  // Create a clone of the button to maintain any name/value in the request
+                  const tempInput = document.createElement('input');
+                  tempInput.type = 'hidden';
+                  tempInput.name = button.name;
+                  tempInput.value = button.value;
+                  form.appendChild(tempInput);
+                  
+                  // Use HTMX to submit the form
+                  htmx.trigger(form, 'submit');
+                  
+                  // Clean up
+                  setTimeout(() => {
+                    form.removeChild(tempInput);
+                    button.removeAttribute('data-has-confirm');
+                  }, 100);
+                } else {
+                  // Regular form submission
+                  form.submit();
+                  button.removeAttribute('data-has-confirm');
+                }
+              } else if (button.getAttribute('data-original-onclick')) {
+                // For buttons with saved onclick handlers from first confirm
+                const onclickStr = button.getAttribute('data-original-onclick');
+                // Execute the onclick but replace return confirm with if(true) to skip second confirm
+                const onclickFn = new Function(onclickStr.replace('return confirm', 'if(true'));
+                onclickFn.call(button);
+                button.removeAttribute('data-has-confirm');
+                button.removeAttribute('data-original-onclick');
+              
+                // For HTMX requests
+                htmx.trigger(button, 'click');
+                setTimeout(() => {
+                  button.removeAttribute('data-has-confirm');
+                }, 100);
+              } else {
+                // For regular links or other elements
+                const clickEvent = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                
+                // Temporarily remove our click handler
+                const originalEventListener = button.onclick;
+                button.onclick = null;
+                
+                // Dispatch the click event
+                button.dispatchEvent(clickEvent);
+                
+                // Restore the original event listener
+                setTimeout(() => {
+                  button.onclick = originalEventListener;
+                  button.removeAttribute('data-has-confirm');
+                }, 100);
+              }
+            } else {
+              // If canceled, make sure to remove the data-has-confirm attribute
+              button.removeAttribute('data-has-confirm');
+            }
+          }
+          */
+        });
+
+        document.querySelectorAll('input[type="checkbox"].selectAll').forEach((selectAll) => {
+          selectAll.addEventListener('click', function(event) {
+            table = event.target.parentNode.parentNode.parentNode.parentNode;
+            table.querySelectorAll('tbody input[type="checkbox"]').forEach(($checkbox) => {
+              if (event.target.checked) {
+                $checkbox.checked = true;
+                document.querySelectorAll('.bulk-action').forEach(($div) => {
+                  $div.style.visibility = 'visible'
+                });
+              } else {
+                $checkbox.checked = false;
+                document.querySelectorAll('.bulk-action').forEach(($div) => {
+                  $div.style.visibility = 'hidden'
+                });
+              }
+            })
           });
         });
-      }
 
-      document.querySelectorAll('input[type="checkbox"].selectAll').forEach((selectAll) => {
-        selectAll.addEventListener('click', function(event) {
-          table = event.target.parentNode.parentNode.parentNode.parentNode;
-          table.querySelectorAll('tbody input[type="checkbox"]').forEach(($checkbox) => {
-            if (event.target.checked) {
-              $checkbox.checked = true;
+        document.querySelectorAll('input[type="checkbox"]').forEach(($checkbox) => {
+          $checkbox.addEventListener('click', function(event) {
+            if (document.querySelectorAll('#object-list input[type="checkbox"]:checked').length > 0) {
               document.querySelectorAll('.bulk-action').forEach(($div) => {
                 $div.style.visibility = 'visible'
               });
             } else {
-              $checkbox.checked = false;
               document.querySelectorAll('.bulk-action').forEach(($div) => {
                 $div.style.visibility = 'hidden'
               });
@@ -153,20 +297,129 @@
           })
         });
       });
-
-      document.querySelectorAll('input[type="checkbox"]').forEach(($checkbox) => {
-        $checkbox.addEventListener('click', function(event) {
-          if (document.querySelectorAll('#object-list input[type="checkbox"]:checked').length > 0) {
-            document.querySelectorAll('.bulk-action').forEach(($div) => {
-              $div.style.visibility = 'visible'
-            });
-          } else {
-            document.querySelectorAll('.bulk-action').forEach(($div) => {
-              $div.style.visibility = 'hidden'
-            });
+      
+      // Track forms that have already been submitted to prevent duplicate submissions
+      var submittedForms = new Set();
+      
+      // Simple confirmation function that prevents double submission
+      function confirmDelete(button, message) {
+        // Show a standard confirmation dialog
+        if (confirm(message || 'Are you sure you want to delete this item?')) {
+          // Disable the button to prevent double clicks
+          button.disabled = true;
+          
+          // Add visual feedback
+          button.innerHTML = '<span class="icon is-small"><i class="fas fa-spinner fa-spin"></i></span><span>Processing...</span>';
+          
+          // Submit the form after a tiny delay to show the spinner
+          if (button.form) {
+            setTimeout(function() {
+              button.form.submit();
+            }, 100);
           }
-        })
+        }
+        
+        // Always return false to prevent the default form submission
+        return false;
+      }
+      
+      // Guaranteed one-click solution - completely prevents multiple form submissions
+      function disableButton(button, formId) {
+        // If the form has already been submitted, stop immediately
+        if (submittedForms.has(formId)) {
+          console.log('Form ' + formId + ' already submitted');
+          return false;
+        }
+        
+        // Mark the form as submitted
+        submittedForms.add(formId);
+        
+        // Prevent multiple clicks by instantly disabling the button
+        button.disabled = true;
+        
+        // Visual feedback
+        button.style.opacity = '0.5';
+        button.innerHTML = '<span class="icon is-small"><i class="fas fa-spinner fa-spin"></i></span><span>Processing...</span>';
+        
+        // Create a safeguard to prevent any native form submission
+        var form = document.getElementById(formId);
+        var originalSubmitFunction = form.submit;
+        
+        // Replace form's submit method with our controlled version that checks the flag
+        form.submit = function() {
+          // Only allow submission if the form isn't in our submitted set
+          if (!submittedForms.has(formId)) {
+            submittedForms.add(formId);
+            originalSubmitFunction.apply(form);
+          } else {
+            console.log('Prevented duplicate submit of form: ' + formId);
+          }
+        };
+        
+        // Submit the form after a very short delay to allow visual feedback
+        setTimeout(function() {
+          if (submittedForms.has(formId)) {
+            originalSubmitFunction.apply(form);
+          }
+        }, 10);
+        
+        return false; // Prevent default form submission entirely
+      }
+      
+      // Global form submission prevention
+      document.addEventListener('DOMContentLoaded', function() {
+        // Find all forms and add submission prevention
+        document.querySelectorAll('form').forEach(function(form) {
+          form.addEventListener('submit', function(event) {
+            var formId = form.id || ('form-' + Math.random().toString(36).substr(2, 9));
+            
+            // If the form doesn't have an ID, give it one
+            if (!form.id) {
+              form.id = formId;
+            }
+            
+            // If this form has already been submitted, block it
+            if (submittedForms.has(form.id)) {
+              event.preventDefault();
+              event.stopPropagation();
+              console.log('Prevented duplicate submit of form: ' + form.id);
+              return false;
+            }
+            
+            // Mark dangerous forms (with delete buttons) for tracking
+            var hasDangerousButton = form.querySelector('.is-danger') !== null;
+            if (hasDangerousButton) {
+              submittedForms.add(form.id);
+            }
+          });
+        });
       });
-    });
-  </script>
+    </script>
+    <script>
+      // Global character count for all textareas with maxlength (e.g., description fields)
+      function updateCharCount(textarea, counterId) {
+        if (!textarea || !counterId) return;
+        var counter = document.getElementById(counterId);
+        if (counter) {
+          counter.textContent = textarea.value.length;
+        }
+      }
+      function initCharCounters(context) {
+        (context || document).querySelectorAll('textarea[maxlength]').forEach(function(textarea) {
+          var counterId = 'desc-count-' + textarea.name;
+          updateCharCount(textarea, counterId);
+          textarea.removeEventListener('input', textarea._charCountListener || (()=>{}));
+          textarea._charCountListener = function() { updateCharCount(this, counterId); };
+          textarea.addEventListener('input', textarea._charCountListener);
+        });
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        initCharCounters();
+      });
+      // If using HTMX or AJAX, re-initialize counters after content swap
+      document.body.addEventListener('htmx:afterSwap', function(e) {
+        initCharCounters(e.target);
+      });
+    </script>
+  </body>
 </html>

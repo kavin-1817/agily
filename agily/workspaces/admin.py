@@ -7,6 +7,7 @@ class WorkspaceAdmin(admin.ModelAdmin):
     actions_on_bottom = True
     list_display = ("name", "owner", "created_at", "updated_at")
     search_fields = ["name"]
+    filter_horizontal = ("members",)
 
 
 admin.site.register(Workspace, WorkspaceAdmin)

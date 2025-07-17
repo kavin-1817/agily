@@ -3,12 +3,48 @@
 {% block page_title %}Project: {{ project.name }}{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="section">
-    <h2 class="title">Project: {{ project.name }}</h2>
-    <p><strong>Description:</strong> {{ project.description }}</p>
-    <p><strong>Created:</strong> {{ project.created_at }}</p>
-    <p><strong>Last Updated:</strong> {{ project.updated_at }}</p>
+<nav class="level">
+  <!-- ... existing nav code ... -->
+</nav>
+<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10);">
+  <div class="card-content" style="background: #f8fafc; border-radius: 12px;">
+    <div style="max-width: 700px; width: 100%; display: flex; flex-direction: column; gap: 1.2em; align-items: flex-start;">
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:700; color:#000000;">
+          <span class="icon"><i class="fas fa-heading"></i></span> Name
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.name }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:700; color:#000000;">
+          <span class="icon"><i class="fas fa-user-shield"></i></span> Project Admin
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.project_admin|default:"Not assigned" }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:700; color:#000000;">
+          <span class="icon"><i class="fas fa-calendar-alt"></i></span> Created
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.created_at }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:700; color:#000000;">
+          <span class="icon"><i class="fas fa-clock"></i></span> Last Update
+        </div>
+        <div style="margin-left: 0.5em;">: <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:700; color:#000000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-align-left"></i></span> Description
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="content" style="background: #fff; border-radius: 8px; padding: 1em 1.2em; border: 1px solid #e5e7eb; min-height: 60px; width: 100%; word-break: break-word; min-width: 600px;">
+            {{ object.description|default:''|linebreaksbr }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-{% endblock %} 
+{% endblock %}

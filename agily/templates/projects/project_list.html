@@ -5,13 +5,22 @@
 {% block content %}
 <div class="container">
   <div class="section">
-    <h2 class="title">Projects</h2>
-    <a class="button is-primary" href="{% url 'project-add' %}">Add Project</a>
+    <div class="level">
+      <div class="level-left">
+        <h2 class="title">Projects</h2>
+      </div>
+      <div class="level-right">
+        {% if user.is_superuser %}
+        <a class="button is-primary" href="{% url 'project-add' %}" style="margin-right: 0.5em;">Add Project</a>
+        {% endif %}
+      </div>
+    </div>
     <table class="table is-bordered is-striped is-hoverable is-fullwidth">
       <thead>
         <tr>
           <th>Name</th>
           <th>Description</th>
+          <th>Project Admin</th>
           <th>Created</th>
           <th>Updated</th>
           <th>Actions</th>
@@ -21,18 +30,38 @@
         {% if projects %}
           {% for project in projects %}
           <tr>
-            <td><a href="{% url 'project-detail' project.pk %}">{{ project.name }}</a></td>
-            <td>{{ project.description }}</td>
+            <td><b>{{ project.name }}</b></td>
+            <td style=" word-break: break-word; max-width: 300px;">
+              {{ project.description|default:'' }}
+            </td>
+            <td>{{ project.project_admin|default:"Not assigned" }}</td>
             <td>{{ project.created_at|date:'Y-m-d H:i:s' }}</td>
             <td>{{ project.updated_at|date:'Y-m-d H:i:s' }}</td>
-            <td></td>
+            <td>
+              <a href="{% url 'project-detail' pk=project.id %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;">
+                <i class="fas fa-eye" style="color:white;"></i>
+              </a>
+              {% if user.is_superuser %}
+                <a href="{% url 'project-edit' pk=project.id %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;">
+                  <i class="fas fa-edit" style="color:white;"></i>
+                </a>
+                <form method="post" action="{% url 'project-delete' project.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this project?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;">
+                    <i class="fas fa-trash" style="color:white;"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         {% else %}
-          <tr><td colspan="5">No projects found for this workspace.</td></tr>
+          <tr><td colspan="6">No projects found for this workspace.</td></tr>
         {% endif %}
       </tbody>
     </table>
+    <br/>
+    {% include "paginator.html" %}
   </div>
 </div>
-{% endblock %} 
+{% endblock %}

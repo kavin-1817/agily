@@ -1,58 +1,86 @@
 {% extends 'stories/base.html' %}
 
-{% block page_title %}Product Backlog(s) :: {{ current_workspace }}{% endblock %}
+{% block page_title %}Product Backlog(s){% endblock %}
 
-{% block object_add_url %}{% url 'stories:epic-add' current_workspace %}{% endblock %}
-{% block object_list_url %}{% url 'stories:epic-list' current_workspace %}{% endblock %}
-
-{% block table_head_content %}
-  <tr>
-    <th>
-      <input type="checkbox" class="selectAll" />
-    </th>
-    <th><abbr title="Identification Number">ID</abbr></th>
-    <th>Product Backlog</th>
-    <th>State</th>
-    <th>Priority</th>
-    <th><abbr title="Total Points">Pts</abbr></th>
-    <th>Stories</th>
-    <th>Progress</th>
-    <th>Owner</th>
-    <th>Actions</th>
-  </tr>
-{% endblock %}
-
-{% block table_body_content %}
-  {% for product_backlog in object_list %}
-  <tr {% if product_backlog.is_done %}class="has-text-grey-dark"{% endif %}>
-    <td>
-      <input type="checkbox" name="epic-{{ product_backlog.id }}" />
-    </td>
-    <td>#{{ product_backlog.id }}</td>
-    <td>
-      <a href="{% url 'stories:epic-detail' current_workspace product_backlog.id %}" {% if product_backlog.is_done %}class="has-text-grey-dark"{% endif %}>
-        <strong>{{ product_backlog.title }}</strong><br/>
-      </a>
-      {% for tag in product_backlog.tags.all %}
-      <span class="tag is-light">{{ tag.name }}</span>
-      {% endfor %}
-    </td>
-    <td>{{ product_backlog.state }}</td>
-    <td>{{ product_backlog.priority }}</td>
-    <td>{{ product_backlog.total_points }}</td>
-    <td>{{ product_backlog.story_count }}</td>
-    <td>
-      <progress class="progress is-primary" value="{{ product_backlog.progress }}" max="100">{{ product_backlog.progress }}%</progress>
-    </td>
-    <td>{{ product_backlog.owner.username }}</td>
-    <td>
-      <a class="button is-small is-link is-outlined" href="{% url 'stories:epic-edit' current_workspace product_backlog.id %}?next={{ encoded_url }}" title="Edit">
-				<span class="icon is-small">
-					<i class="fas fa-edit"></i>
-				</span>
-				<small>edit</small>
-      </a>
-    </td>
-  </tr>
-  {% endfor %}
+{% block content %}
+  <div class="container">
+    <div class="section">
+      <div class="level" style="margin-bottom: 1em;">
+        <div class="level-left">
+          <h2 class="title" style="margin-right: 1.5em;">Product Backlogs</h2>
+          <form method="get" class="level-item" style="margin-bottom: 0; display: flex; align-items: center;">
+            <input class="input" type="text" name="q" placeholder="Search for..." value="{{ request.GET.q }}" style="max-width: 300px;">
+            <button class="button is-success" type="submit" style="margin-left: 0.5em;">
+              <span class="icon is-small">
+                <i class="fas fa-search"></i>
+              </span>
+              <small>Search</small>
+            </button>
+          </form>
+        </div>
+        <div class="level-right">
+          {% if is_project_admin or user.is_superuser %}
+            <a class="button is-link" href="{% url 'stories:epic-add' current_workspace %}" style="margin-right: 0.5em;">
+              <span class="icon is-small"><i class="fas fa-plus"></i></span>
+              <small>Create</small>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+          <thead>
+            {% block table_head_content %}
+              <tr>
+                <th>ID</th>
+                <th>Product Backlog</th>
+                <th>State</th>
+                <th>Priority</th>
+                <th><abbr title="Total Points">Pts</abbr></th>
+                <th>Stories</th>
+                <th>Owner</th>
+                <th>Actions</th>
+              </tr>
+            {% endblock %}
+          </thead>
+          <tbody>
+            {% block table_body_content %}
+              {% for product_backlog in object_list %}
+                <tr {% if product_backlog.is_done %}class="has-text-grey-dark"{% endif %}>
+                  <td>#{{ product_backlog.id }}</td>
+                  <td>
+                    
+                      <strong>{{ product_backlog.title }}</strong><br/>
+                    
+                    {% for tag in product_backlog.tags.all %}
+                    <span class="tag is-light">{{ tag.name }}</span>
+                    {% endfor %}
+                  </td>
+                  <td>{{ product_backlog.state }}</td>
+                  <td>{{ product_backlog.priority }}</td>
+                  <td>{{ product_backlog.total_points }}</td>
+                  <td>{{ product_backlog.story_count }}</td>
+                  <td>{{ product_backlog.owner.username }}</td>
+                  <td>
+                    <a href="{% url 'stories:epic-detail' current_workspace product_backlog.id %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
+                    {% if is_project_admin or user.is_superuser %}
+                      <a href="{% url 'stories:epic-edit' current_workspace product_backlog.id %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
+                      <form method="post" action="{% url 'stories:epic-delete' current_workspace product_backlog.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this product backlog?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class='fas fa-trash' style='color:white;'></i></button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8">No product backlogs found.</td>
+                </tr>
+              {% endfor %}
+            {% endblock %}
+          </tbody>
+        </table>
+        <br/>
+        {% include "paginator.html" %}
+    </div>
+  </div>
 {% endblock %}

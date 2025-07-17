@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <div class="section">
+      <h2 class="title">Delete Sprint</h2>
+      <p>Are you sure you want to delete the sprint: <strong>{{ object.title }}</strong>?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button is-danger">Delete</button>
+        <a href="{% url 'sprints:sprint-list' current_workspace %}" class="button">Cancel</a>
+      </form>
+    </div>
+  </div>
+{% endblock %} 

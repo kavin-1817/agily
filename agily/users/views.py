@@ -1,9 +1,57 @@
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, RedirectView, UpdateView
-
+from django.contrib.auth.views import LoginView as DjangoLoginView, LogoutView as DjangoLogoutView
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 
 from .models import User
+
+
+class CustomLoginView(DjangoLoginView):
+    """
+    Custom login view that provides better error handling and user experience.
+    """
+    template_name = 'registration/login.html'
+    form_class = AuthenticationForm
+    
+    def form_invalid(self, form):
+        """
+        Handle invalid form submission with better error messages.
+        """
+        # Add a custom error message for authentication failures
+        if not form.non_field_errors():
+            form.add_error(None, "Invalid username or password. Please try again.")
+        
+        return super().form_invalid(form)
+    
+    def get_success_url(self):
+        """
+        Redirect to the appropriate page after successful login.
+        """
+        # Check if there's a next parameter
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        
+        # Default redirect to workspace index or dashboard
+        return reverse('workspace_index')
+
+
+class CustomLogoutView(DjangoLogoutView):
+    """
+    Custom logout view that handles logout more gracefully.
+    """
+    next_page = '/login/'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Clear any workspace session data before logout.
+        """
+        if 'current_workspace' in request.session:
+            del request.session['current_workspace']
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):

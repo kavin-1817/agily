@@ -59,6 +59,7 @@ THIRD_PARTY_APPS = (
     "watchman",
     "simple_history",
     "tagulous",
+    "widget_tweaks",
 )
 
 # Apps specific for this project go here.
@@ -189,6 +190,7 @@ TEMPLATES = [
                 "agily.context_processors.navigation",
                 "agily.context_processors.search",
                 "agily.context_processors.current_workspace",
+                "agily.context_processors.user_roles",
             ],
         },
     },
@@ -254,18 +256,19 @@ SOCIALACCOUNT_ADAPTER = "agily.users.adapters.SocialAccountAdapter"
 # Select the correct user model
 AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "/workspaces/select/"
-LOGIN_URL = "login"
 
 # SLUGLIFIER
 AUTOSLUG_SLUGIFY_FUNCTION = "slugify.slugify"
 
 # CELERY
 INSTALLED_APPS += ("agily.taskapp.celery.CeleryConfig",)
-BROKER_URL = env("CELERY_BROKER_URL", default="amqp://")
+BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_TIMEZONE = "UTC"
 CELERY_ACCEPT_CONTENT = ["msgpack"]
 CELERY_TASK_SERIALIZER = "msgpack"
 CELERY_RESULT_SERIALIZER = "msgpack"
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
 
 CELERY_QUEUES = {
     "celery": {"exchange": "celery", "binding_key": "celery"},
@@ -376,23 +379,9 @@ if ENVIRONMENT == "production":
     SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 
 else:
-    # django-debug-toolbar
-    # ------------------------------------------------------------------------------
-    MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)
-    INSTALLED_APPS += ("debug_toolbar",)
-
-    INTERNAL_IPS = ("127.0.0.1",)
-
-    DEBUG_TOOLBAR_CONFIG = {
-        "DISABLE_PANELS": [
-            "debug_toolbar.panels.redirects.RedirectsPanel",
-        ],
-        "SHOW_TEMPLATE_CONTEXT": True,
-    }
-
-# if we are running tests, we want to use a fast hasher
-if sys.argv[1:2] == ["test"]:
-    PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
+    # if we are running tests, we want to use a fast hasher
+    if sys.argv[1:2] == ["test"]:
+        PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'info',

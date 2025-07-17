@@ -7,9 +7,6 @@
 
 {% block table_head_content %}
   <tr>
-    <th>
-      <input type="checkbox" class="selectAll" />
-    </th>
     <th>Name</th>
     <th>Description</th>
     <th>Owner</th>
@@ -21,9 +18,6 @@
 {% block table_body_content %}
   {% for workspace in object_list %}
   <tr>
-    <td>
-      <input type="checkbox" name="workspace-{{ workspace.id }}" />
-    </td>
     <td>
       <a href="{% url 'workspaces:workspace-detail' current_workspace workspace.id %}">
         <strong>{{ workspace.name }}</strong><br/>
@@ -39,6 +33,12 @@
         </span>
         <small>edit</small>
       </a>
+     <form method="post" action="{% url 'workspaces:workspace-detail' current_workspace workspace.id %}" style="display:inline;">
+       {% csrf_token %}
+       <button class="button is-small is-link is-outlined" type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this workspace?');" style="min-width:2.5em;">
+         <span class="icon is-small"><i class="fas fa-trash"></i></span>
+       </button>
+     </form>
     </td>
   </tr>
   {% endfor %}

@@ -1,20 +1,26 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.urls import reverse_lazy
-from .models import Project, Issue, IssueAttachment
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils.decorators import method_decorator
-from django.db.models import Q, Count, Max, Case, When
-from django.shortcuts import render, get_object_or_404, redirect
-from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm
-from django.http import HttpResponseForbidden, FileResponse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import models
-import os
+from django.db.models import Q, Case, When, Count, Max, Value, BooleanField
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, FileResponse, Http404
+from django.urls import reverse_lazy, reverse
 from django.utils.encoding import smart_str
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic.edit import DeleteView
+
+import json
+import os
+import uuid
+from datetime import datetime
+
+from .models import Project, Issue, IssueAttachment
+from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm
 
 
 class BaseListView(ListView):
-    paginate_by = 16
+    paginate_by = 6
 
     filter_fields = {}
     select_related = None
@@ -66,22 +72,45 @@ class BaseListView(ListView):
         return qs
 
 @method_decorator(login_required, name="dispatch")
-class ProjectListView(ListView):
+class ProjectListView(BaseListView):
     model = Project
     template_name = "projects/project_list.html"
     context_object_name = "projects"
 
     def get_queryset(self):
+        qs = super().get_queryset()
         workspace_slug = self.request.session.get("current_workspace")
         if workspace_slug:
-            return Project.objects.filter(workspace__slug=workspace_slug)
-        return Project.objects.none()
+            qs = qs.filter(workspace__slug=workspace_slug)
+        return qs
+
+    def post(self, request, *args, **kwargs):
+        # Bulk delete logic
+        if request.POST.get("remove") == "yes":
+            # Only superusers or project admins can delete
+            group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+            is_superuser = request.user.is_superuser
+            is_project_admin = "project admin" in group_names
+            if not (is_superuser or is_project_admin):
+                return HttpResponseForbidden(b"You do not have permission to delete projects.")
+            # Collect selected project IDs
+            project_ids = [key.split("project-")[1] for key in request.POST.keys() if key.startswith("project-")]
+            if project_ids:
+                from agily.tasks import remove_projects
+                remove_projects.delay(project_ids)
+            return redirect("project-list")
+        return self.get(request, *args, **kwargs)
 
 @method_decorator([login_required, user_passes_test(lambda u: u.is_staff)], name="dispatch")
 class ProjectCreateView(CreateView):
     model = Project
     form_class = ProjectForm
     template_name = "projects/project_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden(b"Only superusers can create projects.")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -99,81 +128,69 @@ class ProjectDetailView(DetailView):
     template_name = "projects/project_detail.html"
     context_object_name = "project"
 
-@method_decorator(login_required, name="dispatch")
-class IssueListView(ListView):
-    model = Issue
-    template_name = "projects/issue_list.html"
-    context_object_name = "issues"
-
-    def get_queryset(self):
-        project_id = self.kwargs["project_id"]
-        qs = Issue.objects.filter(project_id=project_id)
-        issue_id = self.request.GET.get("id")
-        if issue_id:
-            qs = qs.filter(id=issue_id)
-        # Order by severity: critical > high > medium > low, then by created_at desc
-        severity_order = Case(
-            When(severity="critical", then=0),
-            When(severity="high", then=1),
-            When(severity="medium", then=2),
-            When(severity="low", then=3),
-            default=4,
-            output_field=models.IntegerField(),
-        )
-        return qs.order_by(severity_order, "-created_at")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = get_object_or_404(Project, id=self.kwargs["project_id"])
-        return context
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("remove") == "yes":
+            obj = self.get_object()
+            # Allow only superusers or the project admin to delete
+            if request.user.is_superuser or request.user == obj.project_admin:
+                obj.delete()
+                return redirect("project-list")
+            else:
+                return HttpResponseForbidden(b"You do not have permission to delete this project.")
+        return self.get(request, *args, **kwargs)
 
 @method_decorator(login_required, name="dispatch")
-class IssueCreateView(CreateView):
-    form_class = IssueForm
-    template_name = "projects/issue_form.html"
+class ProjectUpdateView(UpdateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = "projects/project_form.html"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST or self.request.FILES:
-            context["attachment_form"] = MultiIssueAttachmentForm(self.request.POST, self.request.FILES)
-        else:
-            context["attachment_form"] = MultiIssueAttachmentForm()
-        return context
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden(b"Only superusers can edit projects.")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        attachment_form = context["attachment_form"]
-        form.instance.project_id = self.kwargs["project_id"]
-        response = super().form_valid(form)
-        if attachment_form.is_valid():
-            files = self.request.FILES.getlist("files")
-            description = attachment_form.cleaned_data.get("description", "")
-            for f in files:
-                IssueAttachment.objects.create(issue=self.object, file=f, description=description)
-        return response
-
     def get_success_url(self):
-        return reverse_lazy("issue-list", kwargs={"project_id": self.kwargs["project_id"]})
+        return reverse_lazy("project-detail", kwargs={"pk": self.object.pk})
 
 @method_decorator(login_required, name="dispatch")
-class IssueDetailView(DetailView):
-    model = Issue
-    template_name = "projects/issue_detail.html"
-    context_object_name = "issue"
+class ProjectDeleteView(DeleteView):
+    model = Project
+    template_name = "projects/project_confirm_delete.html"
+    success_url = reverse_lazy("project-list")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden(b"Only superusers can delete projects.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # If the request is from the list page, delete immediately
+        if request.POST.get("remove") == "yes":
+            self.object = self.get_object()
+            self.object.delete()
+            return redirect("project-list")
+        # Otherwise, fall back to default (confirmation page)
+        return super().post(request, *args, **kwargs)
 
 @method_decorator(login_required, name="dispatch")
-class IssueGlobalListView(ListView):
+class IssueGlobalListView(BaseListView):
     model = Issue
     template_name = "projects/issue_list.html"
-    context_object_name = "issues"
+    filter_fields = {}
+    select_related = None
+    prefetch_related = None
 
     def get_queryset(self):
-        qs = Issue.objects.all()
+        qs = super().get_queryset()
+        project_id = self.request.GET.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
         issue_id = self.request.GET.get("id")
         if issue_id:
             qs = qs.filter(id=issue_id)
@@ -191,6 +208,12 @@ class IssueGlobalListView(ListView):
         context = super().get_context_data(**kwargs)
         context["project"] = None
         context["global_issues"] = True
+        context["projects"] = Project.objects.all()
+        context["selected_project_id"] = self.request.GET.get("project", "")
+        group_names = [g.name.lower().strip() for g in self.request.user.groups.all()]
+        context["is_tester"] = any(g in ["tester", "testers"] for g in group_names)
+        context["is_developer"] = any(g in ["developer", "developers"] for g in group_names)
+        context["is_project_admin"] = "project admin" in group_names
         return context
 
 @method_decorator(login_required, name="dispatch")
@@ -198,12 +221,39 @@ class IssueGlobalCreateView(CreateView):
     form_class = IssueGlobalForm
     template_name = "projects/issue_form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        # Allow project admins, superusers, and testers to create issues
+        if (request.user.is_superuser or 
+            "project admin" in group_names or 
+            "tester" in group_names or 
+            "testers" in group_names):
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"You do not have permission to create issues.")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST or self.request.FILES:
             context["attachment_form"] = MultiIssueAttachmentForm(self.request.POST, self.request.FILES)
         else:
             context["attachment_form"] = MultiIssueAttachmentForm()
+        
+        # Add project context
+        workspace_slug = self.request.session.get("current_workspace")
+        if workspace_slug:
+            from agily.workspaces.models import Workspace
+            try:
+                workspace = Workspace.objects.get(slug=workspace_slug)
+                projects = Project.objects.filter(workspace=workspace).order_by("name")
+                context["available_projects"] = projects
+                context["no_projects"] = not projects.exists()
+            except Workspace.DoesNotExist:
+                context["available_projects"] = []
+                context["no_projects"] = True
+        else:
+            context["available_projects"] = []
+            context["no_projects"] = True
+        
         return context
 
     def get_form_kwargs(self):
@@ -225,6 +275,72 @@ class IssueGlobalCreateView(CreateView):
     def get_success_url(self):
         return reverse_lazy("global-issue-list")
 
+@method_decorator(login_required, name="dispatch")
+class IssueGlobalUpdateView(UpdateView):
+    model = Issue
+    form_class = IssueGlobalForm
+    template_name = "projects/issue_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        # Allow project admins and superusers unrestricted access
+        if request.user.is_superuser or "project admin" in group_names:
+            return super().dispatch(request, *args, **kwargs)
+        
+        # Check if user has basic permission to edit issues
+        if not ("tester" in group_names or "testers" in group_names or "developer" in group_names or "developers" in group_names):
+            return HttpResponseForbidden(b"You do not have permission to edit issues.")
+        
+        # For developers, check if they can edit this specific issue
+        if any(g in ["developer", "developers"] for g in group_names):
+            # Get the issue being edited
+            issue_pk = kwargs.get('pk')
+            if issue_pk:
+                try:
+                    issue = Issue.objects.get(pk=issue_pk)
+                    # Developers can only edit issues assigned to them
+                    if issue.assignee != request.user:
+                        return HttpResponseForbidden(b"You can only edit issues assigned to you.")
+                except Issue.DoesNotExist:
+                    return HttpResponseForbidden(b"Issue not found.")
+        
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def get_form_class(self):
+        return self.form_class
+
+    def get_success_url(self):
+        return reverse_lazy("global-issue-list")
+
+@method_decorator(login_required, name="dispatch")
+class IssueGlobalDetailView(DetailView):
+    model = Issue
+    template_name = "projects/issue_detail.html"
+    context_object_name = "issue"
+
+@method_decorator(login_required, name="dispatch")
+class IssueGlobalDeleteView(DeleteView):
+    model = Issue
+    template_name = "projects/issue_confirm_delete.html"
+    success_url = reverse_lazy("global-issue-list")
+
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        # Allow project admins, superusers, testers, and developers to delete issues
+        if (request.user.is_superuser or 
+            "project admin" in group_names or 
+            "tester" in group_names or 
+            "testers" in group_names or
+            "developer" in group_names or
+            "developers" in group_names):
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"You do not have permission to delete issues.")
+
 @login_required
 def upload_issue_attachment(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
@@ -244,18 +360,50 @@ def upload_issue_attachment(request, pk):
 def download_issue_attachment(request, pk):
     attachment = get_object_or_404(IssueAttachment, pk=pk)
     file_handle = attachment.file.open('rb')
-    response = FileResponse(file_handle)
     filename = os.path.basename(attachment.file.name)
+    response = FileResponse(file_handle, content_type='application/octet-stream')
     response['Content-Disposition'] = f'attachment; filename="{smart_str(filename)}"'
     response['Content-Length'] = attachment.file.size
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
     return response
 
 @login_required
 def delete_issue_attachment(request, pk):
     attachment = get_object_or_404(IssueAttachment, pk=pk)
     issue = attachment.issue
+    
+    # Check user permissions
+    group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+    is_project_admin = "project admin" in group_names
+    is_tester = any(g in ["tester", "testers"] for g in group_names)
+    
+    # Only allow superusers, project admins, or testers to delete attachments
+    if not (request.user.is_superuser or is_project_admin or is_tester):
+        return HttpResponseForbidden("You do not have permission to delete attachments.")
+    
+    # Check if this is a fresh request or a resubmission
+    attachment_token = f"delete_issue_attachment_{pk}"
+    
     if request.method == "POST":
-        attachment.delete()
-        messages.success(request, "Attachment deleted successfully.")
-        return redirect("issue-detail", project_id=issue.project_id, pk=issue.pk)
+        # Only process if we haven't seen this token before
+        if attachment_token not in request.session or not request.session[attachment_token]:
+            # Mark that we've seen this token
+            request.session[attachment_token] = True
+            request.session.modified = True
+            
+            # Delete the attachment
+            attachment.delete()
+            messages.success(request, "Attachment deleted successfully.")
+        else:
+            # This is a duplicate submission, just redirect with no action
+            messages.info(request, "This attachment was already deleted.")
+            
+        return redirect("global-issue-detail", pk=issue.pk)
+    
+    # GET request - create a fresh token for this view
+    request.session[attachment_token] = False
+    request.session.modified = True
+    
     return render(request, "projects/issue_attachment_confirm_delete.html", {"attachment": attachment})

@@ -1,20 +1,110 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Add Issue{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Edit Issue{% else %}Add Issue{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="section">
-    <h2 class="title">Add Issue</h2>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <h3 class="title is-6">Attachments</h3>
-      <label for="id_files">Attachments</label>
-      <input type="file" name="files" id="id_files" multiple>
-      {{ attachment_form.description.label_tag }} {{ attachment_form.description }}
-      <button class="button is-primary" type="submit">Save</button>
-    </form>
+  <nav class="level">
+    <div class="level-item has-text-centered" style="width: 100%;">
+      <h2 class="title is-3" style="margin: 0 auto;">{% if form.instance.pk %}Edit Issue{% else %}Add Issue{% endif %}</h2>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="card" style="max-width: 900px; margin: 2em auto; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10); border-radius: 16px;">
+      <div class="card-content" style="padding: 2.5em 2em; display: flex; flex-direction: column; align-items: flex-start;">
+        {% if no_projects %}
+          <div class="notification is-warning">
+            <strong>No Projects Available:</strong>
+            <p>There are no projects in the current workspace. You need to create a project first before you can create issues.</p>
+            <p><a href="{% url 'project-add' %}" class="button is-small is-primary">Create Project</a></p>
+          </div>
+        {% endif %}
+        {% if form.errors %}
+          <div class="notification is-danger">
+            <strong>Form Errors:</strong>
+            {{ form.errors }}
+          </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+
+          {# Dynamically render only the fields present in the form #}
+          {% for field in form.visible_fields %}
+            {% if field.name == 'description' %}
+              <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                    <label class="label" for="id_{{ field.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">
+                      {{ field.label }}:
+                    </label>
+                  </div>
+                  <div style="flex: 1; min-width: 500px;">
+                    <div class="control">
+                      <textarea name="{{ field.html_name }}" id="id_{{ field.name }}" maxlength="300"
+                        oninput="updateCharCount(this, 'desc-count-{{ field.name }}')" rows="7"
+                        style="width:100%; resize:vertical; font-size:1.1em; padding:1em; border-radius:8px; border:1.5px solid #475569; background:#f8fafc; min-height: 8em; max-width: 100%;">{{ field.value|default_if_none:'' }}</textarea>
+                    </div>
+                    <div>
+                      <span id="desc-count-{{ field.name }}">0</span>/300 characters
+                    </div>
+                    {% if field.errors %}
+                      <p class="help is-danger">{{ field.errors }}</p>
+                    {% endif %}
+                    <p class="help">Max 300 characters.</p>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                    <label class="label" for="id_{{ field.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">
+                      {{ field.label }}{% if field.name == 'solution' %} (for developers){% endif %}:
+                    </label>
+                  </div>
+                  <div style="flex: 1; min-width: 500px;">
+                    <div class="control">
+                      {{ field }}
+                    </div>
+                    {% if field.errors %}
+                      <p class="help is-danger">{{ field.errors }}</p>
+                    {% endif %}
+                    {% if field.help_text %}
+                      <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_files" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">Attachments :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <input id="id_files" type="file" name="files" multiple />
+                <p class="help">You can select multiple files to upload.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top: 2em; width: 100%;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;"></div>
+              <div style="flex: 1; min-width: 500px; display: flex; justify-content: center;">
+                <div style="display: flex; gap: 1.5em;">
+                  <button type="submit" class="button is-primary is-medium" style="border-radius: 8px; min-width: 120px;" {% if no_projects %}disabled{% endif %}>Save</button>
+                  <a href="{{ cancel_url|default:'#' }}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
-</div>
 {% endblock %} 

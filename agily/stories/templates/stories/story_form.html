@@ -5,100 +5,242 @@
 {% block page_title %}Create Story{% endblock %}
 
 {% block content %}
-	<nav class="level">
-		<!-- Left side -->
-		<div class="level-left">
-			<nav class="breadcrumb is-large" aria-label="breadcrumbs">
-				<ul>
-          <li><a href="{% url 'stories:story-list' current_workspace %}">Stories</a></li>
-          <li class="is-active">
-            <a href="#" aria-current="page">
-              {% if object %}Editing {{ object.title }}{% else %}Add a Story{% endif %}
-            </a>
-          </li>
-				</ul>
-			</nav>
-		</div>
-
-		<!-- Right side -->
-		<div class="level-right">
-			<div class="level-item">
-			</div>
-		</div>
-	</nav>
-
+  <nav class="level">
+    <div class="level-item has-text-centered" style="width: 100%;">
+      <h2 class="title is-3" style="margin: 0 auto;">Add a Story</h2>
+    </div>
+  </nav>
   <div class="container">
-    {% if form.errors %}
-      <div class="notification is-danger">
-        <strong>Form Errors:</strong>
-        {{ form.errors }}
-      </div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data">{% csrf_token %}
-      {% for hidden in form.hidden_fields %}
-        {{ hidden }}
-      {% endfor %}
-      {% for field in form.visible_fields %}
-          <div class="field">
-            {{ field.errors }}
-            <label class="label">{{ field.label_tag }}</label>
-            <div class="control">
-              {{ field }}
-            </div>
-            {% if field.help_text %}
-              <p class="help">{{ field.help_text|safe }}</p>
-            {% endif %}
+    <div class="card" style="max-width: 900px; margin: 2em auto; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10); border-radius: 16px;">
+      <div class="card-content" style="padding: 2.5em 2em; display: flex; flex-direction: column; align-items: flex-start;">
+        {% if form.errors %}
+          <div class="notification is-danger">
+            <strong>Form Errors:</strong>
+            {{ form.errors }}
           </div>
-      {% endfor %}
-      <div class="field">
-        <label class="label">Attachments</label>
-        <div class="control">
-          <input type="file" name="files" multiple>
-        </div>
-        <p class="help">You can select multiple files to upload.</p>
-      </div>
-      {% if object and object.attachments.all %}
-        <div class="field">
-          <label class="label">Existing Attachments</label>
-          <ul>
-            {% for attachment in object.attachments.all %}
-              <li><a href="{% url 'stories:story-attachment-download' object.workspace.slug attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download>{{ attachment.filename }}</a>{% if attachment.description %} - {{ attachment.description }}{% endif %}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-      <div class="field is-grouped">
-        <div class="control">
-          <button class="button is-link" type="submit" name="save" value="save">
-            <span class="icon is-small">
-              <i class="fas fa-save"></i>
-            </span>
-            <small>Save Changes</small>
-          </button>
-        </div>
-        <div class="control">
-          <a class="button is-text" href="{{ next_url }}">Cancel</a>
-        </div>
-        <div class="control">
-          <input type="hidden" name="next" id="next" value="{{ next_url }}" />
-          <button class="button is-primary" type="submit" data-next="{{ story_add_url }}" name="save-and-add" value="save-and-add">
-            <span class="icon is-small">
-              <i class="fas fa-save"></i>
-            </span>
-            <small>Save &amp; Add Another</small>
-          </button>
-        </div>
-        {% if object %}
-        <div class="control">
-          <button class="button is-warning" type="submit" name="save-as-new" value="save-as-new">
-            <span class="icon is-small">
-              <i class="fas fa-save"></i>
-            </span>
-            <small>Save as New</small>
-          </button>
-        </div>
         {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+
+          {# Project #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;">
+                <label class="label" for="id_{{ form.project.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.project.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.project }}
+                </div>
+                {% if form.project.errors %}
+                  <p class="help is-danger">{{ form.project.errors }}</p>
+                {% endif %}
+                {% if form.project.help_text %}
+                  <p class="help">{{ form.project.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Title #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;">
+                <label class="label" for="id_{{ form.title.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.title.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.title }}
+                </div>
+                {% if form.title.errors %}
+                  <p class="help is-danger">{{ form.title.errors }}</p>
+                {% endif %}
+                {% if form.title.help_text %}
+                  <p class="help">{{ form.title.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Epic (Product Backlog) #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.epic.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.epic.label|default:'Product Backlog' }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.epic }}
+                </div>
+                {% if form.epic.errors %}
+                  <p class="help is-danger">{{ form.epic.errors }}</p>
+                {% endif %}
+                {% if form.epic.help_text %}
+                  <p class="help">{{ form.epic.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Sprint #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.sprint.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.sprint.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.sprint }}
+                </div>
+                {% if form.sprint.errors %}
+                  <p class="help is-danger">{{ form.sprint.errors }}</p>
+                {% endif %}
+                {% if form.sprint.help_text %}
+                  <p class="help">{{ form.sprint.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Assignee #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.assignee.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.assignee.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.assignee }}
+                </div>
+                {% if form.assignee.errors %}
+                  <p class="help is-danger">{{ form.assignee.errors }}</p>
+                {% endif %}
+                {% if form.assignee.help_text %}
+                  <p class="help">{{ form.assignee.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# State #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.state.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.state.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.state }}
+                </div>
+                {% if form.state.errors %}
+                  <p class="help is-danger">{{ form.state.errors }}</p>
+                {% endif %}
+                {% if form.state.help_text %}
+                  <p class="help">{{ form.state.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Priority #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.priority.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.priority.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.priority }}
+                </div>
+                {% if form.priority.errors %}
+                  <p class="help is-danger">{{ form.priority.errors }}</p>
+                {% endif %}
+                {% if form.priority.help_text %}
+                  <p class="help">{{ form.priority.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {# Points #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.points.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.points.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  {{ form.points }}
+                </div>
+                {% if form.points.errors %}
+                  <p class="help is-danger">{{ form.points.errors }}</p>
+                {% endif %}
+                {% if form.points.help_text %}
+                  <p class="help">{{ form.points.help_text|safe }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          
+
+          {# Description #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_{{ form.description.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.description.label }} :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <div class="control">
+                  <textarea name="{{ form.description.html_name }}" id="id_{{ form.description.name }}" maxlength="300"
+                    oninput="updateCharCount(this, 'desc-count-{{ form.description.name }}')" rows="7"
+                    style="width:100%; resize:vertical; font-size:1.1em; padding:1em; border-radius:8px; border:1.5px solid #475569; background:#f8fafc; min-height: 8em; max-width: 100%;">{{ form.description.value|default_if_none:'' }}</textarea>
+                </div>
+                <div>
+                  <span id="desc-count-{{ form.description.name }}">0</span>/300 characters
+                </div>
+                {% if form.description.errors %}
+                  <p class="help is-danger">{{ form.description.errors }}</p>
+                {% endif %}
+                <p class="help">Max 300 characters.</p>
+              </div>
+            </div>
+          </div>
+
+          {# Attachments #}
+          <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                <label class="label" for="id_files" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">Attachments :</label>
+              </div>
+              <div style="flex: 1; min-width: 500px;">
+                <input id="id_files" type="file" name="files" multiple />
+                <p class="help">You can select multiple files to upload.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top: 2em; width: 100%;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;"></div>
+              <div style="flex: 1; min-width: 500px; display: flex; justify-content: center;">
+                <div style="display: flex; gap: 1.5em;">
+                  <button type="submit" class="button is-primary is-medium" style="border-radius: 8px; min-width: 120px;">Save</button>
+                  <a href="{{ cancel_url }}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{# No custom file upload styles or scripts #}
 {% endblock %}

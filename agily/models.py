@@ -88,6 +88,8 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="projects")
+    project_admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
+                                     null=True, blank=True, related_name="administered_projects")
 
     class Meta:
         unique_together = ['name', 'workspace']
@@ -117,6 +119,7 @@ class Issue(models.Model):
     assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_issues")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    solution = models.TextField(blank=True, null=True, help_text="Solution provided by the developer.")
 
     def __str__(self):
         return self.title

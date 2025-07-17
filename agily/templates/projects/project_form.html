@@ -3,46 +3,114 @@
 {% block page_title %}Add Project{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="section">
-    <h2 class="title">Create Project</h2>
-    {% if not user.is_staff %}
-      <div class="notification is-danger">Only admins can create projects.</div>
-    {% else %}
-      {% if form.errors %}
-        <div class="notification is-danger">
-          <p><strong>Form Errors:</strong></p>
-          {{ form.errors }}
-        </div>
-      {% endif %}
-      
-      <form method="post">
-        {% csrf_token %}
-        <div class="field">
-          <label class="label">Name</label>
-          <div class="control">
-            {{ form.name }}
-            {% if form.name.errors %}
-              <p class="help is-danger">{{ form.name.errors.0 }}</p>
+  <nav class="level">
+    <div class="level-item has-text-centered" style="width: 100%;">
+      <h2 class="title is-3" style="margin: 0 auto;">Create Project</h2>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="card" style="max-width: 900px; margin: 2em auto; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10); border-radius: 16px;">
+      <div class="card-content" style="padding: 2.5em 2em; display: flex; flex-direction: column; align-items: flex-start;">
+        {% if not user.is_staff %}
+          <div class="notification is-danger">Only admins can create projects.</div>
+        {% else %}
+          {% if form.errors %}
+            <div class="notification is-danger">
+              <strong>Form Errors:</strong>
+              {{ form.errors }}
+            </div>
+          {% endif %}
+          <form method="post" id="project-form">
+            {% csrf_token %}
+            {% for hidden in form.hidden_fields %}
+              {{ hidden }}
+            {% endfor %}
+            
+            <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+              <div style="display: flex; align-items: center;">
+                <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;">
+                  <label class="label" for="id_{{ form.name.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.name.label }} :</label>
+                </div>
+                <div style="flex: 1; width: 500px;">
+                  <div class="control">
+                    {{ form.name }}
+                  </div>
+                  {% if form.name.errors %}
+                    <p class="help is-danger">{{ form.name.errors }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% if form.name.help_text %}
+              <div style="margin-left: 215px; margin-top: 2px;">
+                <p class="help">{{ form.name.help_text|safe }}</p>
+              </div>
             {% endif %}
-          </div>
-        </div>
-        <div class="field">
-          <label class="label">Description</label>
-          <div class="control">
-            {{ form.description }}
-            {% if form.description.errors %}
-              <p class="help is-danger">{{ form.description.errors.0 }}</p>
-            {% endif %}
-          </div>
-        </div>
-        <div class="field">
-          <div class="control">
-            <button class="button is-primary" type="submit">Create</button>
-          </div>
-        </div>
-      </form>
-    {% endif %}
+
+            <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+              <div style="display: flex; align-items: flex-start;">
+                <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                  <label class="label" for="id_{{ form.project_admin.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.project_admin.label }} :</label>
+                </div>
+                <div style="flex: 1; min-width: 500px;">
+                  <div class="control">
+                    {{ form.project_admin }}
+                  </div>
+                  {% if form.project_admin.errors %}
+                    <p class="help is-danger">{{ form.project_admin.errors }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+
+            <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+              <div style="display: flex; align-items: flex-start;">
+                <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                  <label class="label" for="id_{{ form.description.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">{{ form.description.label }} :</label>
+                </div>
+                <div style="flex: 1; max-width: 500px;">
+                  <div class="control">
+                    <textarea name="{{ form.description.html_name }}" id="id_{{ form.description.name }}" rows="7" maxlength="300" oninput="updateCharCount(this)" style="width:100%; resize:vertical; font-size:1.1em; padding:1em; border-radius:8px; border:1.5px solid #475569; background:#f8fafc; min-height: 8em; min-width: 500px;">{{ form.description.value|default_if_none:'' }}</textarea>
+                    <div style="margin-top: 0.3em;">
+                      <span id="desc-char-count">0</span>/300 characters
+                    </div>
+                    <script>
+                      function updateCharCount(textarea) {
+                        var count = textarea.value.length;
+                        document.getElementById('desc-char-count').innerText = count;
+                      }
+                      // Initialize on page load
+                      document.addEventListener('DOMContentLoaded', function() {
+                        var textarea = document.getElementById('id_{{ form.description.name }}');
+                        if (textarea) updateCharCount(textarea);
+                      });
+                    </script>
+                  </div>
+                  {% if form.description.errors %}
+                    <p class="help is-danger">{{ form.description.errors }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div style="margin-left: 215px; margin-top: 2px;">
+              <p class="help">Max 300 characters.</p>
+            </div>
+
+            <div class="field" style="margin-top: 2em; width: 100%;">
+              <div style="display: flex; align-items: center;">
+                <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;"></div>
+                <div style="flex: 1; max-width: 400px; display: flex; justify-content: center;">
+                  <div style="display: flex; gap: 1.5em;">
+                    <button type="submit" class="button is-primary is-medium" style="border-radius: 8px; min-width: 120px;">Save</button>
+                    <a href="{{ cancel_url|default:'#' }}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
   </div>
-</div>
 {% endblock %} 

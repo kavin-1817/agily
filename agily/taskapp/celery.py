@@ -15,7 +15,7 @@ environ.Env.read_env("config/settings/.env")  # reading .env file
 
 if not settings.configured:
     # set the default Django settings module for the 'celery' program.
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")  # pragma: no cover
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")  # pragma: no cover
 
 
 app = Celery("agily")

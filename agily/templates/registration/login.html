@@ -1,42 +1,185 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
 {% block title %}agily - Login{% endblock %}
 
 {% block content %}
-  <div class="columns is-mobile">
-    <div class="column is-half is-offset-one-quarter">
-      <h2 class="title">Welcome to agily</h2>
-
-      {% if form.subject.errors %}
-        <ol>
-        {% for error in form.subject.errors %}
-          <li><strong>{{ error|escape }}</strong></li>
-        {% endfor %}
-        </ol>
-      {% endif %}
-      <form method="post">
-        {% csrf_token %}
-        {% for hidden in form.hidden_fields %}
-          {{ hidden }}
-        {% endfor %}
-        {% for field in form.visible_fields %}
-            <div class="field">
-              {{ field.errors }}
-              <label class="label">{{ field.label_tag }}</label>
-              <div class="control">
-                {{ field }}
+  <div class="login-page-outer">
+    <div class="login-bg-gradient"></div>
+    <div class="login-card">
+      <div class="login-card-content">
+        <img src="/static/images/agily-logo1.png" alt="Agily Logo" style="width: 110px; height: 110px; margin-bottom: 2.2rem; background: transparent; display: block;">
+        <h2 class="login-title">Welcome to Agily</h2>
+        <div class="login-subtitle">Sign in to supercharge your agile workflow</div>
+        {% if form.errors %}
+          <div class="notification is-danger">
+            <button class="delete" onclick="this.parentElement.remove()"></button>
+            <p><strong>Login Error:</strong></p>
+            {% if form.non_field_errors %}
+              {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              <p>Please enter a correct username and password. Note that both fields may be case-sensitive.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+        <form method="post" class="login-form-modern">
+          {% csrf_token %}
+          {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+          {% for field in form.visible_fields %}
+            <div class="field login-field-modern">
+              {% if field.errors %}
+                <div class="notification is-danger is-small">
+                  {% for error in field.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <label class="label login-label-modern">{{ field.label_tag }}</label>
+              <div class="control login-control-modern">
+                {{ field|add_class:'login-input-modern' }}
               </div>
               {% if field.help_text %}
                 <p class="help">{{ field.help_text|safe }}</p>
               {% endif %}
             </div>
-        {% endfor %}
-        <div class="field is-grouped">
-          <div class="control">
-            <button class="button is-success is-medium" type="submit">Login</button>
+          {% endfor %}
+          <div class="login-btn-row">
+            <button class="button login-btn-modern" type="submit">Login</button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
+  <style>
+    .login-page-outer {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface, #f3f4f6);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-bg-gradient {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 60%, #fef9c3 100%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 6px 32px 0 rgba(71,85,105,0.13);
+      padding: 2.5rem 2.5rem 2rem 2.5rem;
+      max-width: 370px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+    }
+    .login-card-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .login-title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary, #475569);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.01em;
+    }
+    .login-subtitle {
+      text-align: center;
+      font-size: 1.08rem;
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .login-form-modern {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+    }
+    .login-field-modern {
+      width: 100%;
+      max-width: 260px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 0.2rem;
+    }
+    .login-label-modern {
+      text-align: left;
+      width: 100%;
+      font-weight: 600;
+      color: var(--primary, #475569);
+      margin-bottom: 0.3em;
+      font-size: 1.05em;
+    }
+    .login-control-modern {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .login-input-modern {
+      width: 100%;
+      max-width: 260px;
+      padding: 0.7em 1em;
+      border-radius: 10px;
+      border: 1.5px solid var(--primary, #475569);
+      font-size: 1.08em;
+      background: var(--surface, #f3f4f6);
+      color: var(--text, #1e293b);
+      text-align: left;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .login-input-modern:focus {
+      border-color: var(--accent, #2A2D64);
+      box-shadow: 0 0 0 2px rgba(42,45,100,0.13);
+    }
+    .login-btn-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 1.2rem;
+    }
+    .login-btn-modern {
+      background: #8FA01F !important;
+      color: #fff !important;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.08em;
+      padding: 0.7em 2.2em;
+      box-shadow: 0 2px 12px 0 rgba(71,85,105,0.10);
+      border: none;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .login-btn-modern:hover {
+      background: #788618 !important;
+      color: #fff !important;
+    }
+    @media (max-width: 500px) {
+      .login-card {
+        padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+        max-width: 98vw;
+      }
+      .login-field-modern, .login-input-modern {
+        max-width: 98vw;
+      }
+    }
+  </style>
 {% endblock %}

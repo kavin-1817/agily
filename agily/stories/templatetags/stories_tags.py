@@ -1,5 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe as safe
+import os
 
 
 register = template.Library()
@@ -16,3 +17,9 @@ def to_html(text):
     html = replace_links_with_html(text)
     html = html.replace("\n", "<br>")
     return safe(html)
+
+
+@register.filter
+def basename(value):
+    """Extract the filename from a file path."""
+    return os.path.basename(value)

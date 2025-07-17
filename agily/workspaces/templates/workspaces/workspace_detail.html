@@ -54,30 +54,41 @@
     </form>
 	</nav>
 
-	<div class="card">
-		<div class="card-content">
-			<div class="media">
-				<div class="media-content">
-					<p class="title is-4">{{ workspace.name }}</p>
-				</div>
-			</div>
-
-			<div class="content">
-                {% if workspace.description %}
-  				  {{ workspace.description|default:'' }}<br/><br/>
-                {% endif %}
-				<div class="field is-grouped is-grouped-multiline">
-					<div class="control">
-						<div class="tags has-addons">
-							<span class="tag">Owner</span>
-							<span class="tag is-primary">{{ workspace.owner }}</span>
-						</div>
-					</div>
-				</div>
-				<strong>Last Update:</strong> <time datetime="{{ workspace.updated_at }}">{{ workspace.updated_at }}</time>
-			</div>
-		</div>
-	</div>
+	<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10);">
+  <div class="card-content" style="background: #f8fafc; border-radius: 12px;">
+    <div style="max-width: 700px; width: 100%; display: flex; flex-direction: column; gap: 1.2em; align-items: flex-start;">
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-heading"></i></span> Name
+        </div>
+        <div style="margin-left: 0.5em;">: {{ workspace.name }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-user"></i></span> Owner
+        </div>
+        <div style="margin-left: 0.5em;">: {{ workspace.owner }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-clock"></i></span> Last Update
+        </div>
+        <div style="margin-left: 0.5em;">: <time datetime="{{ workspace.updated_at }}">{{ workspace.updated_at }}</time></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-align-left"></i></span> Description
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="content" style="background: #fff; border-radius: 8px; padding: 1em 1.2em; border: 1px solid #e5e7eb; min-height: 60px; width: 100%; white-space: pre-wrap; word-break: break-word;">
+            {{ workspace.description|default:'' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <br/>
 	<nav class="level">

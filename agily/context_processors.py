@@ -38,3 +38,15 @@ def search(request):
 def current_workspace(request):
     workspace_slug = request.session.get("current_workspace")
     return {"current_workspace": workspace_slug}
+
+
+def user_roles(request):
+    group_names = []
+    user = getattr(request, 'user', None)
+    if user and hasattr(user, 'groups'):
+        group_names = [g.name.lower().strip() for g in user.groups.all()]
+    return {
+        'is_tester': any(g in ['tester', 'testers'] for g in group_names),
+        'is_developer': any(g in ['developer', 'developers'] for g in group_names),
+        'is_project_admin': 'project admin' in group_names,
+    }

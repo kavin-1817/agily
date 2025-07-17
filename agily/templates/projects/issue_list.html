@@ -1,62 +1,89 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Issues for {{ project.name }}{% endblock %}
+{% block page_title %}Issues{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="section">
-    <h2 class="title">Issues for {{ project.name }}</h2>
-    <form method="get" class="mb-4">
-      <div class="field has-addons">
-        <div class="control">
-          <input class="input" type="number" name="id" placeholder="Search by Issue ID..." value="{{ request.GET.id }}">
+  <div class="container">
+    <div class="section">
+      <div class="level" style="margin-bottom: 1em;">
+        <div class="level-left">
+          <h2 class="title" style="margin-right: 1.5em;">Issues</h2>
+          <form method="get" class="level-item" style="margin-bottom: 0; display: flex; align-items: center; gap: 0.5em;">
+            <input class="input" type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}" style="max-width: 200px; font-size: 0.98em; padding: 0.3em 0.7em;">
+            <button class="button is-link" id="search-button" type="submit" style="padding: 0.3em 0.9em; font-size: 0.98em;">
+              <span class="icon is-small">
+                <i class="fas fa-search"></i>
+              </span>
+              <small>Search</small>
+            </button>
+          </form>
         </div>
-        <div class="control">
-          <button class="button is-info" type="submit">Search</button>
+        <div class="level-right">
+          <form method="get" class="level-item" style="margin-right: 1em; display: flex; align-items: center; gap: 0.5em;">
+            <label for="project-filter" style="font-weight: 600; margin-bottom: 0; font-size: 0.98em;">Project:</label>
+            <div class="select" style="max-width: 120px; font-size: 0.98em;">
+              <select name="project" id="project-filter" style="min-width: 80px; font-size: 0.98em; padding: 0.3em 0.7em;">
+                <option value="">All</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}" {% if project.id|stringformat:'s' == selected_project_id|stringformat:'s' %}selected{% endif %}>{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="button is-link" style="padding: 0.3em 0.9em; font-size: 0.98em;">Filter</button>
+          </form>
+          {% if is_tester or is_project_admin or user.is_superuser %}
+            <a class="button is-primary" href="{% url 'global-issue-add' %}" style="margin-left: 1em;">
+              <span class="icon is-small"><i class="fas fa-plus"></i></span>
+              <small>Add Issue</small>
+            </a>
+          {% endif %}
         </div>
       </div>
-    </form>
-    {% if global_issues %}
-      <a class="button is-success mb-2" href="{% url 'global-issue-add' %}">Add Issue</a>
-    {% else %}
-      <a class="button is-success mb-2" href="{% url 'issue-add' project.pk %}">Add Issue</a>
-    {% endif %}
-    <table class="table is-bordered is-striped is-hoverable is-fullwidth">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          {% if global_issues %}<th>Project</th>{% endif %}
-          <th>Status</th>
-          <th>Severity</th>
-          <th>Requester</th>
-          <th>Assignee</th>
-          <th>Created</th>
-          <th>Updated</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for issue in issues %}
-        <tr>
-          <td>{{ issue.id }}</td>
-          <td><a href="{% if global_issues %}{% url 'issue-detail' issue.project.pk issue.pk %}{% else %}{% url 'issue-detail' project.pk issue.pk %}{% endif %}">{{ issue.title }}</a></td>
-          {% if global_issues %}<td>{{ issue.project.name }}</td>{% endif %}
-          <td>{{ issue.get_status_display }}</td>
-          <td>{{ issue.get_severity_display }}</td>
-          <td>{{ issue.requester }}</td>
-          <td>{{ issue.assignee }}</td>
-          <td>{{ issue.created_at|date:'Y-m-d H:i:s' }}</td>
-          <td>{{ issue.updated_at|date:'Y-m-d H:i:s' }}</td>
-          <td>
-            <a class="button is-small is-link" href="{% if global_issues %}{% url 'issue-detail' issue.project.pk issue.pk %}{% else %}{% url 'issue-detail' project.pk issue.pk %}{% endif %}">View</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="10">No issues found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+      <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Severity</th>
+            <th>Requester</th>
+            <th>Assignee</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue in object_list %}
+          <tr>
+            <td>{{ issue.id }}</td>
+            <td><b>{{ issue.title }}</b></td>
+            <td>{{ issue.get_status_display }}</td>
+            <td>{{ issue.get_severity_display }}</td>
+            <td>{{ issue.requester }}</td>
+            <td>{{ issue.assignee }}</td>
+            <td>{{ issue.created_at|date:'Y-m-d H:i:s' }}</td>
+            <td>{{ issue.updated_at|date:'Y-m-d H:i:s' }}</td>
+            <td>
+              <a href="{% url 'global-issue-detail' pk=issue.pk %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
+              {% if is_tester or is_developer or is_project_admin or user.is_superuser %}
+                <a href="{% url 'global-issue-edit' pk=issue.pk %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
+                <form method="post" action="{% url 'global-issue-delete' issue.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  {% if user.is_superuser or is_project_admin or is_tester %}
+                  <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this issue?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class='fas fa-trash' style='color:white;'></i></button>
+                  {% endif %}
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9">No issues found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <br/>
+      {% include "paginator.html" %}
+    </div>
   </div>
-</div>
 {% endblock %} 

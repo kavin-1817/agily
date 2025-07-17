@@ -2,11 +2,11 @@ from itertools import groupby
 
 from django.db.models import F
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
 from agily.sprints.forms import SprintGroupByForm, SprintForm
 from agily.sprints.models import Sprint
@@ -99,6 +99,13 @@ class SprintList(BaseListView):
             qs = qs.filter(project__workspace__slug=workspace_slug)
         return qs.order_by(F("starts_at").asc(nulls_last=True))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_names = [g.name.lower().strip() for g in self.request.user.groups.all()]
+        context["is_project_admin"] = "project admin" in group_names
+        context["user_is_superuser"] = self.request.user.is_superuser
+        return context
+
     def _process_in_bulk_actions(self):
         sprint_ids = [t[7:] for t in self.request.POST.keys() if "sprint-" in t]
 
@@ -147,15 +154,39 @@ class SprintEditMixin:
 
 @method_decorator(login_required, name="dispatch")
 class SprintCreateView(SprintEditMixin, CreateView):
-    pass
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        # Allow project admins and superusers unrestricted access
+        if request.user.is_superuser or "project admin" in group_names:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"Only project admins can create sprints.")
 
 
 @method_decorator(login_required, name="dispatch")
 class SprintUpdateView(SprintEditMixin, UpdateView):
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        # Allow project admins and superusers unrestricted access
+        if request.user.is_superuser or "project admin" in group_names:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"Only project admins can edit sprints.")
 
-    def post(self, *args, **kwargs):
-        if self.request.POST.get("save-as-new"):
-            form = self.get_form_class()(self.request.POST)
-            return self.form_valid(form)
 
-        return super().post(*args, **kwargs)
+@method_decorator(login_required, name="dispatch")
+class SprintDeleteView(DeleteView):
+    model = Sprint
+    template_name = "sprints/sprint_confirm_delete.html"
+    def get_success_url(self):
+        return reverse_lazy("sprints:sprint-list", args=[self.kwargs["workspace"]])
+    def dispatch(self, request, *args, **kwargs):
+        group_names = [g.name.lower().strip() for g in request.user.groups.all()]
+        if (request.user.is_superuser or "project admin" in group_names):
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"You do not have permission to delete sprints.")
+    def post(self, request, *args, **kwargs):
+        # If the request is from the list page, delete immediately
+        if request.POST.get("remove") == "yes":
+            self.object = self.get_object()
+            self.object.delete()
+            return HttpResponseRedirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)

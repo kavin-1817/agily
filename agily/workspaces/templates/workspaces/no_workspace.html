@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block page_title %}No Workspace Access{% endblock %}
+
+{% block content %}
+{% with hide_main_menu=True %}
+<div class="container">
+  <div class="section">
+    <div class="card">
+      <div class="card-content">
+        <h2 class="title has-text-centered">No Workspace Access</h2>
+        
+        <div class="notification is-warning">
+          <p><strong>No Workspaces Available:</strong> You don't have access to any workspaces yet.</p>
+        </div>
+        
+        <div class="content">
+          <p>To get started with the application, you need to be added to a workspace by an administrator.</p>
+          
+          <div class="notification is-info">
+            <p><strong>What to do:</strong></p>
+            <ul>
+              <li>Contact your system administrator</li>
+              <li>Ask them to create a workspace for you</li>
+              <li>Or ask them to add you as a member to an existing workspace</li>
+            </ul>
+          </div>
+          
+          <p>Once you have been added to a workspace, you'll be able to access the application features.</p>
+        </div>
+        
+        <div class="field is-grouped is-grouped-centered" style="margin-top: 2rem;">
+          <div class="control">
+            <a href="{% url 'login' %}" class="button is-info">Try Again</a>
+          </div>
+        </div>
+        
+        <div class="has-text-centered" style="margin-top: 1rem;">
+          <p class="is-size-7 has-text-grey">
+            If you believe this is an error, please contact your system administrator.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %} 

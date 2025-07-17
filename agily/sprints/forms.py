@@ -31,6 +31,10 @@ class SprintForm(forms.ModelForm):
     class Meta:
         model = Sprint
         fields = ["title", "description", "starts_at", "ends_at", "project"]
+        widgets = {
+            "starts_at": forms.DateInput(attrs={"type": "date", "class": "input"}),
+            "ends_at": forms.DateInput(attrs={"type": "date", "class": "input"}),
+        }
 
     def __init__(self, *args, **kwargs):
         workspace = kwargs.pop("workspace", None)

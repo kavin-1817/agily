@@ -2,9 +2,21 @@
 {% block content %}
   <h2>Delete Attachment</h2>
   <p>Are you sure you want to delete the attachment: <strong>{{ attachment.filename }}</strong>?</p>
-  <form method="post">
+  
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+    <div class="notification {% if message.tags %}is-{{ message.tags }}{% else %}is-info{% endif %}">
+      <button class="delete" onclick="this.parentElement.style.display='none';"></button>
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  
+  <form method="post" id="confirm-delete-form">
     {% csrf_token %}
     <button type="submit" class="button is-danger">Delete</button>
-    <a href="{% url 'issue-detail' pk=attachment.issue.pk %}" class="button">Cancel</a>
+    <a href="{% url 'global-issue-detail' pk=attachment.issue.pk %}" class="button">Cancel</a>
   </form>
 {% endblock %} 

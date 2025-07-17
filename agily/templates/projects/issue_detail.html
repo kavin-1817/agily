@@ -3,21 +3,128 @@
 {% block page_title %}Issue: {{ issue.title }}{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="section">
-    <h2 class="title">Issue: {{ issue.title }}</h2>
-    <p><strong>Status:</strong> {{ issue.get_status_display }}</p>
-    <p><strong>Description:</strong> {{ issue.description }}</p>
-    <p><strong>Requester:</strong> {{ issue.requester }}</p>
-    <p><strong>Assignee:</strong> {{ issue.assignee }}</p>
-    <p><strong>Created:</strong> {{ issue.created_at }}</p>
-    <p><strong>Updated:</strong> {{ issue.updated_at }}</p>
-    <a class="button is-link" href="{% url 'issue-list' issue.project.pk %}">Back to Issues</a>
-
-    <hr>
+  <nav class="level">
+    <div class="level-left">
+      <nav class="breadcrumb is-large" aria-label="breadcrumbs">
+        <ul>
+          <li><a href="{% url 'global-issue-list' %}">Issues</a></li>
+          <li class="is-active">
+            <a href="{% url 'global-issue-detail' pk=issue.pk %}" aria-current="page">
+              {{ issue.title }}
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        {% if is_tester or is_project_admin or is_developer or user.is_superuser %}
+        <a href="{% url 'global-issue-edit' pk=issue.pk %}?next={{ request.get_full_path|urlencode }}" class="button is-link">
+          <span class="icon is-small">
+            <i class="fas fa-edit"></i>
+          </span>
+          <small>Edit</small>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+<!-- Removed Back to Issues button for consistency with stories view page -->
+<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10); position: relative;">
+  <div class="card-content" style="background: #f8fafc; border-radius: 12px;">
+    <div style="max-width: 700px; width: 100%; display: flex; flex-direction: column; gap: 1.2em; align-items: flex-start;">
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-heading"></i></span> Title
+        </div>
+        <div style="margin-left: 0.5em;">: {{ issue.title }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-project-diagram"></i></span> Project
+        </div>
+        <div style="margin-left: 0.5em;">: {{ issue.project.name }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-user"></i></span> Reporter
+        </div>
+        <div style="margin-left: 0.5em;">: {{ issue.requester }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-user-check"></i></span> Assignee
+        </div>
+        <div style="margin-left: 0.5em;">: {{ issue.assignee|default:'—' }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-flag"></i></span> Status
+        </div>
+        <div style="margin-left: 0.5em;">: <span class="tag is-info is-light" style="font-size:1em;">{{ issue.get_status_display }}</span></div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-bolt"></i></span> Severity
+        </div>
+        <div style="margin-left: 0.5em;">: <span class="tag is-danger is-light" style="font-size:1em;">{{ issue.severity }}</span></div>
+      </div>
+     
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-clock"></i></span> Last Update
+        </div>
+        <div style="margin-left: 0.5em;">: <time datetime="{{ issue.updated_at }}">{{ issue.updated_at }}</time></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-align-left"></i></span> Description
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="content" style="background: #fff; border-radius: 8px; padding: 1em 1.2em; border: 1px solid #e5e7eb; min-height: 60px; width: 100%;  word-break: break-word; min-width: 600px;">
+            {{ issue.description|default:'' }}
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-lightbulb"></i></span> Solution
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="content" style="background: #fff; border-radius: 8px; padding: 1em 1.2em; border: 1px solid #e5e7eb; min-height: 60px; width: 100%; word-break: break-word; min-width: 600px;">
+            {% if issue.solution %}
+              {{ issue.solution }}
+            {% else %}
+              <span class="has-text-grey">No solution provided yet.</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
+        <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
+          <span class="icon"><i class="fas fa-tags"></i></span> Tags
+        </div>
+        <div style="margin-left: 0.5em; flex: 1; display: flex; align-items: flex-start;">
+          <span style="margin-right: 0.5em;">:</span>
+          <div class="tags" style="margin-top:0.5em;">
+            {% for tag in issue.tags.all %}
+              <span class="tag is-light">{{ tag.name }}</span>
+            {% empty %}
+              <span class="has-text-grey">No tags</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card attachments-section" style="margin-bottom: 2rem; background: #f3f4f6; box-shadow: 0 2px 12px 0 rgba(71,85,105,0.08);">
+  <div class="card-content">
     <div class="level">
       <div class="level-left">
-        <h3 class="title is-5">
+        <h3 class="title is-6" style="color:#2A2D64;">
           <span class="icon is-small">
             <i class="fas fa-paperclip"></i>
           </span>
@@ -25,12 +132,7 @@
         </h3>
       </div>
       <div class="level-right">
-        <a class="button is-primary is-small" href="{% url 'upload-issue-attachment' pk=issue.pk %}">
-          <span class="icon is-small">
-            <i class="fas fa-upload"></i>
-          </span>
-          <span>Add Attachment</span>
-        </a>
+        <!-- Upload attachment button removed -->
       </div>
     </div>
     {% if issue.attachments.all %}
@@ -56,7 +158,7 @@
                 </div>
                 <div class="media-content">
                   <div>
-                    <a href="{% url 'download-issue-attachment' pk=attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download class="has-text-link">
+                    <a href="{% url 'download-issue-attachment' pk=attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download class="has-text-link" data-hx-boost="false" data-hx-ignore="true">
                       {{ attachment.filename }}
                     </a>
                   </div>
@@ -68,25 +170,16 @@
                 </div>
               </div>
             </td>
-            <td>
-              <span class="has-text-grey">{{ attachment.file.size|filesizeformat }}</span>
-            </td>
-            <td>
-              <span class="has-text-grey is-size-7">
-                <time datetime="{{ attachment.uploaded_at }}">{{ attachment.uploaded_at|date:"M j, Y" }}</time>
-              </span>
-            </td>
+            <td><span class="has-text-grey">{{ attachment.file.size|filesizeformat }}</span></td>
+            <td><span class="has-text-grey is-size-7"><time datetime="{{ attachment.uploaded_at }}">{{ attachment.uploaded_at|date:"M j, Y" }}</time></span></td>
             <td>
               <div class="buttons are-small">
-                <form action="{% url 'delete-issue-attachment' pk=attachment.pk %}" method="post" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="button is-danger is-small" onclick="return confirm('Are you sure you want to delete this attachment?')">
+                  <a href="{% url 'delete-issue-attachment' pk=attachment.pk %}" class="button is-danger is-small">
                     <span class="icon is-small">
                       <i class="fas fa-trash"></i>
                     </span>
                     <span>Delete</span>
-                  </button>
-                </form>
+                  </a>
               </div>
             </td>
           </tr>
@@ -106,4 +199,4 @@
     {% endif %}
   </div>
 </div>
-{% endblock %} 
+{% endblock %}

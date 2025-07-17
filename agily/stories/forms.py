@@ -155,6 +155,14 @@ class EpicForm(BaseWorkspaceModelForm):
 
 
 class StoryForm(BaseWorkspaceModelForm):
+    PRIORITY_CHOICES = [
+        (2, 'High'),
+        (1, 'Medium'),
+        (0, 'Low'),
+    ]
+    priority = forms.ChoiceField(choices=PRIORITY_CHOICES, widget=forms.Select(attrs={'class': 'input'}))
+    description = forms.CharField(max_length=300, widget=forms.Textarea)
+    # Remove the files field entirely; handled by plain HTML input and view logic
     class Meta:
         model = Story
         fields = [
@@ -167,7 +175,6 @@ class StoryForm(BaseWorkspaceModelForm):
             "state",
             "priority",
             "points",
-            "tags",
         ]
         labels = {
             "epic": "Product Backlog",
@@ -204,7 +211,8 @@ class StoryForm(BaseWorkspaceModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        if self.request and self.request.user.is_authenticated:
+        # Only set requester on creation
+        if not instance.pk and self.request and self.request.user.is_authenticated:
             instance.requester = self.request.user
         if commit:
             instance.save()

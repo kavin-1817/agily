@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import SprintCreateView, SprintDetailView, SprintList, SprintUpdateView
+from .views import SprintCreateView, SprintDetailView, SprintList, SprintUpdateView, SprintDeleteView
 
 app_name = "sprints"
 
@@ -9,4 +9,5 @@ urlpatterns = [
     path("<int:pk>/", SprintDetailView.as_view(), name="sprint-detail"),
     path("<int:pk>/edit/", SprintUpdateView.as_view(), name="sprint-edit"),
     path("", SprintList.as_view(), name="sprint-list"),
+    path("<int:pk>/delete/", SprintDeleteView.as_view(), name="sprint-delete"),
 ]

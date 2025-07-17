@@ -15,7 +15,7 @@
   <ul class="pagination-list">
   {% for i in paginator.page_range %}
     {% if page_obj.number == i %}
-      <li><a href="?page={{ i }}{{ get_vars }}" class="pagination-link is-current" aria-label="Page {{ i }}" aria-current="page">{{ i }}</a></li>
+      <li><a href="?page={{ i }}{{ get_vars }}" class="pagination-link is-current" aria-label="Page {{ i }}" aria-current="page" style="background-color: #8FA01F; border-color: #8FA01F; color: white;">{{ i }}</a></li>
     {% else %}
       <li><a href="?page={{ i }}{{ get_vars }}" class="pagination-link" aria-label="Goto page {{ i }}">{{ i }}</a></li>
     {% endif %}

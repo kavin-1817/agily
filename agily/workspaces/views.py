@@ -44,7 +44,7 @@ class WorkspaceDetailView(DetailView):
 
 
 class BaseListView(ListView):
-    paginate_by = 16
+    paginate_by = 12
 
     filter_fields = {}
     select_related = None
@@ -162,6 +162,13 @@ class WorkspaceBaseView:
 @method_decorator(login_required, name="dispatch")
 class WorkspaceCreateView(WorkspaceBaseView, CreateView):
 
+    def dispatch(self, request, *args, **kwargs):
+        """Check if user is superuser before allowing workspace creation."""
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("Only superusers can create workspaces.")
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
@@ -189,42 +196,108 @@ class WorkspaceUpdateView(WorkspaceBaseView, UpdateView):
         return self.form_valid(form)
 
 
-@login_required
-def workspace_index(request):
-    default_workspace = request.user.workspace_set.order_by("id").first()
-    if not default_workspace:
-        # Redirect to workspace creation page if user has no workspaces
-        return HttpResponseRedirect(reverse_lazy("workspaces:workspace-add"))
-    request.session["current_workspace"] = default_workspace.slug
-    return HttpResponseRedirect(reverse_lazy("stories:story-list", args=[default_workspace.slug]))
-
-
 class WorkspaceSelectView(ListView):
     model = Workspace
     template_name = "workspaces/workspace_select.html"
     context_object_name = "workspaces"
 
+    def get_queryset(self):
+        """
+        Filter workspaces based on user type:
+        - Superusers see all workspaces
+        - Regular users see only workspaces they're members of
+        """
+        if self.request.user.is_superuser:
+            return Workspace.objects.all()
+        else:
+            return self.request.user.members_set.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_names = [g.name.lower().strip() for g in self.request.user.groups.all()]
+        context["is_project_admin"] = "project admin" in group_names
+        context["is_developer"] = "developer" in group_names or "developers" in group_names
+        context["is_tester"] = "tester" in group_names or "testers" in group_names
+        return context
+
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {"workspaces": Workspace.objects.all()})
+        self.object_list = self.get_queryset()
+        context = self.get_context_data()
+        context["workspaces"] = self.object_list
+        context["hide_main_menu"] = True
+
+        # If user has no workspaces, handle based on user type
+        if not self.object_list.exists():
+            if request.user.is_superuser:
+                return HttpResponseRedirect(reverse_lazy("workspaces:workspace-add"))
+            else:
+                return render(request, "workspaces/no_workspace.html", {"hide_main_menu": True})
+
+        # Always show workspace selection page (no auto-selection)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         workspace_slug = request.POST.get("workspace")
-        print("[DEBUG] POST data:", request.POST)
-        print("[DEBUG] Selected workspace_slug:", workspace_slug)
+        
+        if not workspace_slug:
+            workspaces = self.get_queryset()
+            return render(request, self.template_name, {
+                "workspaces": workspaces, 
+                "error": "Please select a workspace.",
+                "hide_main_menu": True
+            })
+        
         try:
-            if workspace_slug:
-                request.session["current_workspace"] = workspace_slug
-                print("[DEBUG] Set session current_workspace to:", workspace_slug)
-                # Try to reverse the URL and print it
-                try:
-                    url = reverse("stories:story-list", kwargs={"workspace": workspace_slug})
-                    print(f"[DEBUG] Redirecting to: {url}")
-                except NoReverseMatch as e:
-                    print(f"[ERROR] NoReverseMatch: {e}")
-                    return render(request, self.template_name, {"workspaces": Workspace.objects.all(), "error": f"URL error: {e}"})
-                return redirect("stories:story-list", workspace=workspace_slug)
-            print("[DEBUG] No workspace selected, re-rendering form with error.")
-            return render(request, self.template_name, {"workspaces": Workspace.objects.all(), "error": "Please select a workspace."})
+            # Verify the workspace exists and user has access
+            if request.user.is_superuser:
+                workspace = Workspace.objects.get(slug=workspace_slug)
+            else:
+                workspace = request.user.members_set.get(slug=workspace_slug)
+            
+            # Set the workspace in session
+            request.session["current_workspace"] = workspace.slug
+            
+            # Redirect to stories list for the selected workspace
+            return redirect("stories:story-list", workspace=workspace.slug)
+            
+        except Workspace.DoesNotExist:
+            workspaces = self.get_queryset()
+            return render(request, self.template_name, {
+                "workspaces": workspaces, 
+                "error": "Selected workspace not found or access denied.",
+                "hide_main_menu": True
+            })
         except Exception as e:
-            print(f"[ERROR] Exception in WorkspaceSelectView.post: {e}")
-            return render(request, self.template_name, {"workspaces": Workspace.objects.all(), "error": f"Exception: {e}"})
+            workspaces = self.get_queryset()
+            return render(request, self.template_name, {
+                "workspaces": workspaces, 
+                "error": f"Error selecting workspace: {str(e)}",
+                "hide_main_menu": True
+            })
+
+@login_required
+def workspace_index(request):
+    """
+    Handle post-login workspace selection logic.
+    All users (including superusers) are redirected to workspace selection.
+    Only superadmins can create workspaces via admin site.
+    """
+    # Check if user is superuser
+    if request.user.is_superuser:
+        # Superusers can access all workspaces
+        workspaces = Workspace.objects.all()
+    else:
+        # Regular users can only access workspaces they're members of
+        workspaces = request.user.members_set.all()
+    
+    # If user has no workspaces, handle based on user type
+    if not workspaces.exists():
+        if request.user.is_superuser:
+            # Superusers can create workspaces
+            return HttpResponseRedirect(reverse_lazy("workspaces:workspace-add"))
+        else:
+            # Regular users need to contact admin
+            return render(request, "workspaces/no_workspace.html", {"hide_main_menu": True})
+    
+    # All users with workspaces go to workspace selection
+    return HttpResponseRedirect(reverse_lazy("workspaces:workspace-select"))

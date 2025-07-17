@@ -3,82 +3,88 @@
 {% block object_list_url %}{% url 'sprints:sprint-list' current_workspace %}{% endblock %}
 
 {% block content %}
-	<nav class="level">
-		<!-- Left side -->
-		<div class="level-left">
-			<nav class="breadcrumb is-large" aria-label="breadcrumbs">
-				<ul>
-          <li><a href="{% url 'sprints:sprint-list' current_workspace %}">Sprints</a></li>
-          <li class="is-active">
-            <a href="#" aria-current="page">
-              {% if object %}Editing {{ object.title }}{% else %}Create a Sprint{% endif %}
-            </a>
-          </li>
-				</ul>
-			</nav>
-		</div>
-
-		<!-- Right side -->
-		<div class="level-right">
-			<div class="level-item">
-			</div>
-		</div>
-	</nav>
-
-  {% if form.subject.errors %}
-    <ol>
-    {% for error in form.subject.errors %}
-      <li><strong>{{ error|escape }}</strong></li>
-    {% endfor %}
-    </ol>
-  {% endif %}
-  <form method="post">{% csrf_token %}
-    {% for hidden in form.hidden_fields %}
-      {{ hidden }}
-    {% endfor %}
-    {% for field in form.visible_fields %}
-        <div class="field">
-          {{ field.errors }}
-          <label class="label">{{ field.label_tag }}</label>
-          <div class="control">
-            {{ field }}
+  <nav class="level">
+    <div class="level-item has-text-centered" style="width: 100%;">
+      <h2 class="title is-3" style="margin: 0 auto;">Create Sprint</h2>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="card" style="max-width: 900px; margin: 2em auto; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10); border-radius: 16px;">
+      <div class="card-content" style="padding: 2.5em 2em; display: flex; flex-direction: column; align-items: flex-start;">
+        {% if form.errors %}
+          <div class="notification is-danger">
+            <strong>Form Errors:</strong>
+            {{ form.errors }}
           </div>
-          {% if field.help_text %}
-            <p class="help">{{ field.help_text|safe }}</p>
-          {% endif %}
-        </div>
-    {% endfor %}
-    <div class="field is-grouped">
-      <div class="control">
-        <button class="button is-link" type="submit" name="save" value="save">
-          <span class="icon is-small">
-            <i class="fas fa-save"></i>
-          </span>
-          <small>Save Changes</small>
-        </button>
-      </div>
-      <div class="control">
-        <input type="hidden" name="next" id="next" value="{{ next_url }}" />
-        <button class="button is-primary" type="submit" data-next="{{ sprint_add_url }}" name="save-and-add" value="save-and-add">
-          <span class="icon is-small">
-            <i class="fas fa-save"></i>
-          </span>
-          <small>Save &amp; Add Another</small>
-        </button>
-      </div>
-      {% if object %}
-      <div class="control">
-        <button class="button is-warning" type="submit" name="save-as-new" value="save-as-new">
-          <span class="icon is-small">
-            <i class="fas fa-save"></i>
-          </span>
-          <small>Save as New</small>
-        </button>
-      </div>
-      {% endif %}
-      <div class="control">
-        <a class="button is-text" href="{{ next_url }}">Cancel</a>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+          
+          {% for field in form.visible_fields %}
+            {% if field.name == 'description' %}
+              <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                    <label class="label" for="id_{{ field.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">
+                      {{ field.label }}:
+                    </label>
+                  </div>
+                  <div style="flex: 1; min-width: 500px;">
+                    <div class="control">
+                      <textarea name="{{ field.html_name }}" id="id_{{ field.name }}" maxlength="300"
+                        oninput="updateCharCount(this, 'desc-count-{{ field.name }}')" rows="7"
+                        style="width:100%; resize:vertical; font-size:1.1em; padding:1em; border-radius:8px; border:1.5px solid #475569; background:#f8fafc; min-height: 8em; max-width: 100%;">{{ field.value|default_if_none:'' }}</textarea>
+                    </div>
+                    <div>
+                      <span id="desc-count-{{ field.name }}">0</span>/300 characters
+                    </div>
+                    {% if field.errors %}
+                      <p class="help is-danger">{{ field.errors }}</p>
+                    {% endif %}
+                    <p class="help">Max 300 characters.</p>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="field" style="margin-bottom: 1.5em; width: 100%;">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0; padding-top: 8px;">
+                    <label class="label" for="id_{{ field.name }}" style="font-weight: 500; margin-bottom: 0; font-size: 1rem;">
+                      {{ field.label }}{% if field.name == 'solution' %} (for developers){% endif %}:
+                    </label>
+                  </div>
+                  <div style="flex: 1; min-width: 500px;">
+                    <div class="control">
+                      {{ field }}
+                    </div>
+                    {% if field.errors %}
+                      <p class="help is-danger">{{ field.errors }}</p>
+                    {% endif %}
+                    {% if field.help_text %}
+                      <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+          
+          <div class="field" style="margin-top: 2em; width: 100%;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 200px; text-align: right; padding-right: 15px; flex-shrink: 0;"></div>
+              <div style="flex: 1; min-width: 500px; display: flex; justify-content: center;">
+                <div style="display: flex; gap: 1.5em;">
+                  <button type="submit" class="button is-primary is-medium" style="border-radius: 8px; min-width: 120px;">Save</button>
+                  <a href="{{ cancel_url|default:'#' }}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
-  </form>
+  </div>
 {% endblock %}

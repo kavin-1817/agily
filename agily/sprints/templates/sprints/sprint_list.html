@@ -4,59 +4,70 @@
 
 {% block content %}
 <div class="container">
-  {{ block.super }}
+  <div class="section">
+    <div class="level" style="margin-bottom: 1em;">
+      <div class="level-left">
+        <h2 class="title" style="margin-right: 1.5em;">Sprints</h2>
+        <form method="get" class="level-item" style="margin-bottom: 0; display: flex; align-items: center;">
+          {{ search_form.q }}
+          <button class="button is-link" type="submit" style="margin-left: 0.5em;">
+            <span class="icon is-small">
+              <i class="fas fa-search"></i>
+            </span>
+            <small>Search</small>
+          </button>
+        </form>
+      </div>
+      <div class="level-right">
+        {% if is_project_admin or user_is_superuser %}
+          <a class="button is-link" href="{% url 'sprints:sprint-add' current_workspace %}">
+            <span class="icon is-small"><i class="fas fa-plus"></i></span>
+            <small>Create</small>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>State</th>
+          <th>Project</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sprint in object_list %}
+          <tr>
+            <td>#{{ sprint.id }}</td>
+            <td><b>{{ sprint.title }}</b></td>
+            <td>{{ sprint.starts_at|date:"Y-m-d" }}</td>
+            <td>{{ sprint.ends_at|date:"Y-m-d" }}</td>
+            <td>{{ sprint.get_state_display }}</td>
+            <td>{{ sprint.project }}</td>
+            <td>
+              <a href="{% url 'sprints:sprint-detail' current_workspace sprint.id %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class="fas fa-eye" style="color:white;"></i></a>
+              {% if is_project_admin or user.is_superuser %}
+                <a href="{% url 'sprints:sprint-edit' current_workspace sprint.id %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class="fas fa-edit" style="color:white;"></i></a>
+                <form method="post" action="{% url 'sprints:sprint-delete' current_workspace sprint.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this sprint?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class="fas fa-trash" style="color:white;"></i></button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">No sprints found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <br/>
+    {% include "paginator.html" %}
+  </div>
 </div>
 {% endblock %}
-
-{% block table_head_content %}
-  <tr>
-    <th><input type="checkbox" class="selectAll" /></th>
-    <th><abbr title="Identification Number">ID</abbr></th>
-    <th>Title</th>
-    <th>State</th>
-    <th>Starts</th>
-    <th>Ends</th>
-    <th><abbr title="Total Points">Pts</abbr></th>
-    <th>Stories</th>
-    <th>Progress</th>
-    <th>Updated</th>
-    <th>Actions</th>
-  </tr>
-{% endblock %}
-
-{% block table_body_content %}
-  {% for sprint in object_list %}
-    <tr {% if sprint.is_done %}class="has-text-grey-dark"{% endif %}>
-      <td><input type="checkbox" name="sprint-{{ sprint.id }}" /></td>
-      <td>#{{ sprint.id }}</td>
-      <td>
-        <a href="{% url 'sprints:sprint-detail' current_workspace sprint.id %}" {% if sprint.is_done %}class="has-text-grey-dark"{% endif %}>
-          <strong>{{ sprint.title }}</strong><br/>
-        </a>
-      </td>
-      <td>{{ sprint.get_state_display }}</td>
-      <td>{{ sprint.starts_at|default:'' }}</td>
-      <td>{{ sprint.ends_at|default:'' }}</td>
-      <td>{{ sprint.total_points }}</td>
-      <td>{{ sprint.story_count }}</td>
-      <td>
-        <progress class="progress is-primary" value="{{ sprint.progress }}" max="100">{{ sprint.progress }}%</progress>
-      </td>
-      <td>{{ sprint.updated_at|default:'' }}</td>
-      <td>
-        <a class="button is-small is-link is-outlined" href="{% url 'sprints:sprint-edit' current_workspace sprint.id %}?next={{ encoded_url }}" title="Edit">
-            <span class="icon is-small">
-                <i class="fas fa-edit"></i>
-            </span>
-            <small>edit</small>
-        </a>
-      </td>
-    </tr>
-  {% empty %}
-    <tr>
-      <td colspan="11">No sprints found.</td>
-    </tr>
-  {% endfor %}
-{% endblock %}
-
-{% block object_add_url %}{% url 'sprints:sprint-add' current_workspace %}{% endblock %}
