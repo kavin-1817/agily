@@ -43,6 +43,12 @@ urlpatterns = [
     path(r"<workspace>/epics/<int:pk>/delete/", EpicDeleteView.as_view(), name="stories:epic-delete"),
     path("workspaces/", include("agily.workspaces.urls", namespace="workspaces")),
     path(r"", workspace_index, name="workspace_index"),  # disabled for now, until we finish all the features
+    # Workspace-aware Issues
+    path("<workspace>/issues/", IssueGlobalListView.as_view(), name="workspace-issue-list"),
+    path("<workspace>/issues/add/", IssueGlobalCreateView.as_view(), name="workspace-issue-add"),
+    path("<workspace>/issues/<int:pk>/edit/", IssueGlobalUpdateView.as_view(), name="workspace-issue-edit"),
+    path("<workspace>/issues/<int:pk>/", IssueGlobalDetailView.as_view(), name="workspace-issue-detail"),
+    path("<workspace>/issues/<int:pk>/delete/", IssueGlobalDeleteView.as_view(), name="workspace-issue-delete"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

@@ -53,7 +53,7 @@
             Stories
           </a>
           {% endif %}
-          <a class="navbar-item" href="/issues/">Issues</a>
+          <a class="navbar-item" href="{% if current_workspace %}{% url 'workspace-issue-list' current_workspace %}{% else %}/issues/{% endif %}">Issues</a>
         </div>
 
         <div class="navbar-end">

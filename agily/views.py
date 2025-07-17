@@ -17,6 +17,7 @@ from datetime import datetime
 
 from .models import Project, Issue, IssueAttachment
 from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm
+from agily.workspaces.models import Workspace
 
 
 class BaseListView(ListView):
@@ -58,8 +59,12 @@ class BaseListView(ListView):
         qs = self.model.objects
         q = self.request.GET.get("q")
         params = {}
+        # Fix: Use project__workspace__slug for Issue model
         if "workspace" in self.kwargs:
-            params = dict(workspace__slug=self.kwargs["workspace"])
+            if hasattr(self.model, 'project'):
+                params = dict(project__workspace__slug=self.kwargs["workspace"])
+            else:
+                params = dict(workspace__slug=self.kwargs["workspace"])
         if q is None:
             qs = qs.filter(**params) if params else qs.all()
         else:
@@ -188,6 +193,10 @@ class IssueGlobalListView(BaseListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        # Filter by workspace if present
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            qs = qs.filter(project__workspace__slug=workspace_slug)
         project_id = self.request.GET.get("project")
         if project_id:
             qs = qs.filter(project_id=project_id)
@@ -206,14 +215,15 @@ class IssueGlobalListView(BaseListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            projects = Project.objects.filter(workspace__slug=workspace_slug).order_by("name")
+            context["projects"] = projects
+            context["current_workspace"] = workspace_slug
+        else:
+            context["projects"] = Project.objects.all()
         context["project"] = None
-        context["global_issues"] = True
-        context["projects"] = Project.objects.all()
-        context["selected_project_id"] = self.request.GET.get("project", "")
-        group_names = [g.name.lower().strip() for g in self.request.user.groups.all()]
-        context["is_tester"] = any(g in ["tester", "testers"] for g in group_names)
-        context["is_developer"] = any(g in ["developer", "developers"] for g in group_names)
-        context["is_project_admin"] = "project admin" in group_names
+        context["global_issues"] = not bool(self.kwargs.get("workspace"))
         return context
 
 @method_decorator(login_required, name="dispatch")
@@ -223,7 +233,7 @@ class IssueGlobalCreateView(CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        # Allow project admins, superusers, and testers to create issues
+        # Allow only superusers, project admins, or testers to create issues
         if (request.user.is_superuser or 
             "project admin" in group_names or 
             "tester" in group_names or 
@@ -233,27 +243,19 @@ class IssueGlobalCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            projects = Project.objects.filter(workspace__slug=workspace_slug).order_by("name")
+            context["available_projects"] = projects
+            context["no_projects"] = not projects.exists()
+            context["current_workspace"] = workspace_slug
+        else:
+            context["available_projects"] = []
+            context["no_projects"] = True
         if self.request.POST or self.request.FILES:
             context["attachment_form"] = MultiIssueAttachmentForm(self.request.POST, self.request.FILES)
         else:
             context["attachment_form"] = MultiIssueAttachmentForm()
-        
-        # Add project context
-        workspace_slug = self.request.session.get("current_workspace")
-        if workspace_slug:
-            from agily.workspaces.models import Workspace
-            try:
-                workspace = Workspace.objects.get(slug=workspace_slug)
-                projects = Project.objects.filter(workspace=workspace).order_by("name")
-                context["available_projects"] = projects
-                context["no_projects"] = not projects.exists()
-            except Workspace.DoesNotExist:
-                context["available_projects"] = []
-                context["no_projects"] = True
-        else:
-            context["available_projects"] = []
-            context["no_projects"] = True
-        
         return context
 
     def get_form_kwargs(self):
@@ -273,6 +275,9 @@ class IssueGlobalCreateView(CreateView):
         return response
 
     def get_success_url(self):
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            return reverse_lazy("workspace-issue-list", kwargs={"workspace": workspace_slug})
         return reverse_lazy("global-issue-list")
 
 @method_decorator(login_required, name="dispatch")
@@ -283,38 +288,42 @@ class IssueGlobalUpdateView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        # Allow project admins and superusers unrestricted access
-        if request.user.is_superuser or "project admin" in group_names:
+        # Allow only superusers, project admins, testers, or developers to edit issues
+        if (request.user.is_superuser or 
+            "project admin" in group_names or 
+            "tester" in group_names or 
+            "testers" in group_names or 
+            "developer" in group_names or 
+            "developers" in group_names):
             return super().dispatch(request, *args, **kwargs)
-        
-        # Check if user has basic permission to edit issues
-        if not ("tester" in group_names or "testers" in group_names or "developer" in group_names or "developers" in group_names):
-            return HttpResponseForbidden(b"You do not have permission to edit issues.")
-        
-        # For developers, check if they can edit this specific issue
-        if any(g in ["developer", "developers"] for g in group_names):
-            # Get the issue being edited
-            issue_pk = kwargs.get('pk')
-            if issue_pk:
-                try:
-                    issue = Issue.objects.get(pk=issue_pk)
-                    # Developers can only edit issues assigned to them
-                    if issue.assignee != request.user:
-                        return HttpResponseForbidden(b"You can only edit issues assigned to you.")
-                except Issue.DoesNotExist:
-                    return HttpResponseForbidden(b"Issue not found.")
-        
-        return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden(b"You do not have permission to edit issues.")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            projects = Project.objects.filter(workspace__slug=workspace_slug).order_by("name")
+            context["available_projects"] = projects
+            context["no_projects"] = not projects.exists()
+            context["current_workspace"] = workspace_slug
+        else:
+            context["available_projects"] = []
+            context["no_projects"] = True
+        if self.request.POST or self.request.FILES:
+            context["attachment_form"] = MultiIssueAttachmentForm(self.request.POST, self.request.FILES)
+        else:
+            context["attachment_form"] = MultiIssueAttachmentForm()
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def get_form_class(self):
-        return self.form_class
-
     def get_success_url(self):
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            return reverse_lazy("workspace-issue-list", kwargs={"workspace": workspace_slug})
         return reverse_lazy("global-issue-list")
 
 @method_decorator(login_required, name="dispatch")
@@ -322,6 +331,13 @@ class IssueGlobalDetailView(DetailView):
     model = Issue
     template_name = "projects/issue_detail.html"
     context_object_name = "issue"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            context["current_workspace"] = workspace_slug
+        return context
 
 @method_decorator(login_required, name="dispatch")
 class IssueGlobalDeleteView(DeleteView):
@@ -331,15 +347,19 @@ class IssueGlobalDeleteView(DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        # Allow project admins, superusers, testers, and developers to delete issues
+        # Allow only superusers, project admins, or testers to delete issues
         if (request.user.is_superuser or 
             "project admin" in group_names or 
             "tester" in group_names or 
-            "testers" in group_names or
-            "developer" in group_names or
-            "developers" in group_names):
+            "testers" in group_names):
             return super().dispatch(request, *args, **kwargs)
         return HttpResponseForbidden(b"You do not have permission to delete issues.")
+
+    def get_success_url(self):
+        workspace_slug = self.kwargs.get("workspace")
+        if workspace_slug:
+            return reverse_lazy("workspace-issue-list", kwargs={"workspace": workspace_slug})
+        return reverse_lazy("global-issue-list")
 
 @login_required
 def upload_issue_attachment(request, pk):
