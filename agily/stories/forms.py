@@ -116,18 +116,25 @@ class BaseWorkspaceModelForm(ModelForm):
 
 
 class EpicForm(BaseWorkspaceModelForm):
+    priority = forms.ChoiceField(
+        choices=Epic.PRIORITY_CHOICES,
+        widget=forms.Select(attrs={'class': 'input'}),
+        label="Product Backlog Priority"
+    )
+    
     class Meta:
         model = Epic
-        fields = ["title", "description", "owner", "state", "priority", "tags"]
+        fields = ["project", "title", "description", "owner", "state", "priority", "tags"]
         labels = {
+            "project": "Project",
             "title": "Product Backlog Title",
             "description": "Product Backlog Description",
             "owner": "Product Backlog Owner",
             "state": "Product Backlog State",
-            "priority": "Product Backlog Priority",
             "tags": "Product Backlog Tags",
         }
         help_texts = {
+            "project": "Select the project this Product Backlog belongs to.",
             "title": "Enter the name of the Product Backlog.",
             "description": "Describe the Product Backlog.",
         }
@@ -150,8 +157,10 @@ class EpicForm(BaseWorkspaceModelForm):
         
         if workspace_obj:
             self.fields["owner"].queryset = User.objects.filter(is_active=True, workspace=workspace_obj).order_by("username")
+            self.fields["project"].queryset = Project.objects.filter(workspace=workspace_obj).order_by("name")
         else:
             self.fields["owner"].queryset = User.objects.none()
+            self.fields["project"].queryset = Project.objects.none()
 
 
 class StoryForm(BaseWorkspaceModelForm):

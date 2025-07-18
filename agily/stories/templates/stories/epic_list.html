@@ -56,7 +56,15 @@
                     {% endfor %}
                   </td>
                   <td>{{ product_backlog.state }}</td>
-                  <td>{{ product_backlog.priority }}</td>
+                  <td>
+                    {% if product_backlog.priority == 'high' %}
+                      <span class="tag is-danger is-light">High</span>
+                    {% elif product_backlog.priority == 'medium' %}
+                      <span class="tag is-warning is-light">Medium</span>
+                    {% else %}
+                      <span class="tag is-success is-light">Low</span>
+                    {% endif %}
+                  </td>
                   <td>{{ product_backlog.total_points }}</td>
                   <td>{{ product_backlog.story_count }}</td>
                   <td>{{ product_backlog.owner.username }}</td>

@@ -284,6 +284,7 @@ class StoryUpdateView(StoryBaseView, UpdateView):
 class EpicBaseView:
     model = Epic
     fields = [
+        "project",
         "title",
         "description",
         "owner",

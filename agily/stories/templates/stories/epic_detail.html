@@ -64,6 +64,12 @@
       </div>
       <div style="display: flex; align-items: center;">
         <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-project-diagram"></i></span> Project
+        </div>
+        <div style="margin-left: 0.5em;">: {{ object.project|default:"No project assigned" }}</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
           <span class="icon"><i class="fas fa-user"></i></span> Owner
         </div>
         <div style="margin-left: 0.5em;">: {{ object.owner }}</div>
@@ -73,6 +79,20 @@
           <span class="icon"><i class="fas fa-flag"></i></span> Status
         </div>
         <div style="margin-left: 0.5em;">: <span class="tag is-info is-light" style="font-size:1em;">{{ object.state }}</span></div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div style="min-width: 160px; font-weight:bold; color:#000;">
+          <span class="icon"><i class="fas fa-exclamation-triangle"></i></span> Priority
+        </div>
+        <div style="margin-left: 0.5em;">: 
+          {% if object.priority == 'high' %}
+            <span class="tag is-danger is-light" style="font-size:1em;">High</span>
+          {% elif object.priority == 'medium' %}
+            <span class="tag is-warning is-light" style="font-size:1em;">Medium</span>
+          {% else %}
+            <span class="tag is-success is-light" style="font-size:1em;">Low</span>
+          {% endif %}
+        </div>
       </div>
       <div style="display: flex; align-items: center;">
         <div style="min-width: 160px; font-weight:bold; color:#000;">

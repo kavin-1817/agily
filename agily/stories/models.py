@@ -47,6 +47,13 @@ class StoryState(StateModel):
 class Epic(ModelWithProgress):
     """ """
 
+    PRIORITY_CHOICES = [
+        
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'), 
+    ]
+
     class Meta:
         get_latest_by = "created_at"
         ordering = ["priority", "-title"]
@@ -57,12 +64,14 @@ class Epic(ModelWithProgress):
         verbose_name = "epic"
         verbose_name_plural = "epics"
 
-    priority = models.PositiveIntegerField(default=0)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     state = models.ForeignKey(EpicState, on_delete=models.SET_NULL, null=True, blank=True)
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
     workspace = models.ForeignKey("workspaces.Workspace", on_delete=models.CASCADE)
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="epics", null=True, blank=True)
 
     tags = TagField(blank=True)
 
