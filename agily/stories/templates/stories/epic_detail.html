@@ -176,6 +176,9 @@
 			<table class="table is-bordered is-striped is-hoverable is-fullwidth">
 				<thead>
 					<tr>
+					<th>
+                	<input type="checkbox" class="selectAll" />
+            		</th>
 						<th>ID</th>
 						<th>Title</th>
 						<th>State</th>
@@ -189,6 +192,11 @@
 				<tbody>
 					{% for story in object_list %}
 					<tr {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
+						<td>
+							<div class="field">
+							  <input type="checkbox" name="story-{{ story.id }}" />
+							</div>
+						  </td>
 						<td>#{{ story.id }}</td>
 						<td>
 							<a href="{% url 'stories:story-detail' current_workspace story.id %}?next={{ encoded_url }}" {% if story.is_done %}class="has-text-grey-dark"{% endif %}>

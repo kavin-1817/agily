@@ -130,6 +130,7 @@ class IssueAttachment(models.Model):
     file = models.FileField(upload_to="issue_attachments/%Y/%m/%d/")
     description = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="uploaded_issue_attachments")
 
     def __str__(self):
         if self.file:

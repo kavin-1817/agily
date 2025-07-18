@@ -271,7 +271,7 @@ class IssueGlobalCreateView(CreateView):
             files = self.request.FILES.getlist("files")
             description = attachment_form.cleaned_data.get("description", "")
             for f in files:
-                IssueAttachment.objects.create(issue=self.object, file=f, description=description)
+                IssueAttachment.objects.create(issue=self.object, file=f, description=description, uploaded_by=self.request.user)
         return response
 
     def get_success_url(self):
@@ -292,10 +292,13 @@ class IssueGlobalUpdateView(UpdateView):
         if (request.user.is_superuser or 
             "project admin" in group_names or 
             "tester" in group_names or 
-            "testers" in group_names or 
-            "developer" in group_names or 
-            "developers" in group_names):
+            "testers" in group_names):
             return super().dispatch(request, *args, **kwargs)
+        if ("developer" in group_names or "developers" in group_names):
+            issue = self.get_object()
+            if issue.assignee_id == request.user.id:
+                return super().dispatch(request, *args, **kwargs)
+            return HttpResponseForbidden(b"You can only edit issues assigned to you.")
         return HttpResponseForbidden(b"You do not have permission to edit issues.")
 
     def get_context_data(self, **kwargs):
@@ -320,6 +323,17 @@ class IssueGlobalUpdateView(UpdateView):
         kwargs["request"] = self.request
         return kwargs
 
+    def form_valid(self, form):
+        context = self.get_context_data()
+        attachment_form = context["attachment_form"]
+        response = super().form_valid(form)
+        if attachment_form.is_valid():
+            files = self.request.FILES.getlist("files")
+            description = attachment_form.cleaned_data.get("description", "")
+            for f in files:
+                IssueAttachment.objects.create(issue=self.object, file=f, description=description, uploaded_by=self.request.user)
+        return response
+
     def get_success_url(self):
         workspace_slug = self.kwargs.get("workspace")
         if workspace_slug:
@@ -337,6 +351,17 @@ class IssueGlobalDetailView(DetailView):
         workspace_slug = self.kwargs.get("workspace")
         if workspace_slug:
             context["current_workspace"] = workspace_slug
+        # Split attachments by developer/non-developer
+        issue = self.object
+        developer_attachments = []
+        other_attachments = []
+        for att in issue.attachments.all():
+            if att.uploaded_by and att.uploaded_by.groups.filter(name__in=["developer", "developers"]).exists():
+                developer_attachments.append(att)
+            else:
+                other_attachments.append(att)
+        context["developer_attachments"] = developer_attachments
+        context["other_attachments"] = other_attachments
         return context
 
 @method_decorator(login_required, name="dispatch")

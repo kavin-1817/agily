@@ -120,6 +120,15 @@
     </div>
   </div>
 </div>
+{% comment %} Group attachments by developer and non-developer {% endcomment %}
+{% with dev_attachments=issue.attachments.all|dictsortreversed:"uploaded_at"|dictsort:"uploaded_by" %}
+{% with developer_attachments=issue.attachments.all|dictsortreversed:"uploaded_at"|dictsort:"uploaded_by"|default_if_none:None %}
+{% with non_developer_attachments=issue.attachments.all|dictsortreversed:"uploaded_at"|dictsort:"uploaded_by"|default_if_none:None %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+{# Instead, we need to split attachments in Python and pass to context. #}
 <div class="card attachments-section" style="margin-bottom: 2rem; background: #f3f4f6; box-shadow: 0 2px 12px 0 rgba(71,85,105,0.08);">
   <div class="card-content">
     <div class="level">
@@ -135,7 +144,8 @@
         <!-- Upload attachment button removed -->
       </div>
     </div>
-    {% if issue.attachments.all %}
+    {% if developer_attachments %}
+    <h4 class="subtitle is-7" style="margin-top:1em; color:#1B4F72;">Developer Attachments</h4>
     <div class="table-container">
       <table class="table is-fullwidth is-striped is-hoverable">
         <thead>
@@ -147,7 +157,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for attachment in issue.attachments.all %}
+          {% for attachment in developer_attachments %}
           <tr>
             <td>
               <div class="media">
@@ -187,7 +197,62 @@
         </tbody>
       </table>
     </div>
-    {% else %}
+    {% endif %}
+    {% if other_attachments %}
+    <h4 class="subtitle is-7" style="margin-top:1em; color:#1B4F72;">Other Attachments</h4>
+    <div class="table-container">
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            <th style="width: 40%;">File</th>
+            <th style="width: 15%;">Size</th>
+            <th style="width: 20%;">Uploaded</th>
+            <th style="width: 25%;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for attachment in other_attachments %}
+          <tr>
+            <td>
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-small">
+                    <i class="fas fa-file"></i>
+                  </span>
+                </div>
+                <div class="media-content">
+                  <div>
+                    <a href="{% url 'download-issue-attachment' pk=attachment.pk %}?v={{ attachment.uploaded_at.timestamp }}" download class="has-text-link" data-hx-boost="false" data-hx-ignore="true">
+                      {{ attachment.filename }}
+                    </a>
+                  </div>
+                  {% if attachment.description %}
+                  <div class="has-text-grey is-size-7">
+                    {{ attachment.description }}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td><span class="has-text-grey">{{ attachment.file.size|filesizeformat }}</span></td>
+            <td><span class="has-text-grey is-size-7"><time datetime="{{ attachment.uploaded_at }}">{{ attachment.uploaded_at|date:"M j, Y" }}</time></span></td>
+            <td>
+              <div class="buttons are-small">
+                  <a href="{% url 'delete-issue-attachment' pk=attachment.pk %}" class="button is-danger is-small">
+                    <span class="icon is-small">
+                      <i class="fas fa-trash"></i>
+                    </span>
+                    <span>Delete</span>
+                  </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% if not developer_attachments and not other_attachments %}
     <div class="notification is-light">
       <p class="has-text-grey">
         <span class="icon is-small">
