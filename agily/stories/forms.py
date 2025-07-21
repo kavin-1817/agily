@@ -211,12 +211,20 @@ class StoryForm(BaseWorkspaceModelForm):
         
         if workspace_obj:
             self.fields["epic"].queryset = Epic.objects.filter(workspace=workspace_obj).order_by("title")
-            self.fields["sprint"].queryset = Sprint.objects.filter(workspace=workspace_obj).order_by("ends_at")
             self.fields["project"].queryset = Project.objects.filter(workspace=workspace_obj).order_by("name")
+
+            # Filter sprints by workspace and project if project is selected
+            project_id = self.data.get("project") or self.initial.get("project")
+            if project_id:
+                self.fields["sprint"].queryset = Sprint.objects.filter(workspace=workspace_obj, project_id=project_id).order_by("ends_at")
+            else:
+                self.fields["sprint"].queryset = Sprint.objects.filter(workspace=workspace_obj).order_by("ends_at")
         else:
             self.fields["epic"].queryset = Epic.objects.none()
             self.fields["sprint"].queryset = Sprint.objects.none()
             self.fields["project"].queryset = Project.objects.none()
+        # Optionally, set a clearer label for the sprint field
+        self.fields["sprint"].label = "Sprint"
 
     def save(self, commit=True):
         instance = super().save(commit=False)

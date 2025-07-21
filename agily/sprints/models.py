@@ -47,6 +47,8 @@ class Sprint(ModelWithProgress):
     history = HistoricalRecords()
 
     def __str__(self):
+        if self.workspace:
+            return f"{self.title} ({self.workspace.name})"
         return self.title
 
     def get_absolute_url(self):
