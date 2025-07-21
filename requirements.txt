@@ -1,0 +1,14 @@
+Django>=4.0,<6.0
+celery
+django-admin-list-filter-dropdown
+django-debug-toolbar
+django-environ
+django-extensions
+django-simple-history
+django-tagulous
+django-watchman
+msgpack
+mysqlclient
+pytz
+sentry-sdk
+whitenoise 
