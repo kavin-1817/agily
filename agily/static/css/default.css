@@ -1,0 +1,37 @@
+html, html body { font-size: 13px; }
+body section.section { padding: 1rem; }
+
+.navbar-brand > a.navbar-item { padding: 0 1em 0.5em; vertical-align: top; }
+
+/* Attachments table styling */
+.attachments-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.attachments-section .table-container {
+    margin-top: 1rem;
+}
+
+.attachments-section .table th {
+    font-weight: 600;
+    color: #363636;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.attachments-section .table td {
+    vertical-align: middle;
+}
+
+.attachments-section .media-content a {
+    text-decoration: none;
+}
+
+.attachments-section .media-content a:hover {
+    text-decoration: underline;
+}
+
+.attachments-section .buttons .button {
+    margin-bottom: 0;
+}/* Placeholder for default.css. Add your custom styles here. */ 
