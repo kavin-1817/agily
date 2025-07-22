@@ -1,6 +1,6 @@
 {% extends 'stories/base.html' %}
 
-{% block page_title %}Product Backlog(s){% endblock %}
+{% block page_title %}Product Backlogs{% endblock %}
 
 {% block content %}
   <div class="container">
@@ -58,11 +58,11 @@
                   <td>{{ product_backlog.state }}</td>
                   <td>
                     {% if product_backlog.priority == 'high' %}
-                      <span class="tag is-danger is-light">High</span>
+                      <span>High</span>
                     {% elif product_backlog.priority == 'medium' %}
-                      <span class="tag is-warning is-light">Medium</span>
+                      <span>Medium</span>
                     {% else %}
-                      <span class="tag is-success is-light">Low</span>
+                      <span>Low</span>
                     {% endif %}
                   </td>
                   <td>{{ product_backlog.total_points }}</td>

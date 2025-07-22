@@ -33,7 +33,7 @@
         </a>
         {% endif %}
 			</div>
-
+      {% if user.is_superuser or is_project_admin or is_tester %}
 			<div class="level-item">
 				<div class="field has-addons">
 					<p class="control">
@@ -50,7 +50,7 @@
 					</p>
 				</div>
 			</div>
-
+      {% endif %}
 		</div>
 	</nav>
 
@@ -85,13 +85,13 @@
         <div style="min-width: 160px; font-weight:bold; color:#000;">
           <span class="icon"><i class="fas fa-flag"></i></span> State
         </div>
-        <div style="margin-left: 0.5em;">: <span class="tag is-info is-light" style="font-size:1em;">{{ object.state }}</span></div>
+        <div style="margin-left: 0.5em;">: <span style="font-size:1em;">{{ object.state }}</span></div>
       </div>
       <div style="display: flex; align-items: center;">
         <div style="min-width: 160px; font-weight:bold; color:#000;">
           <span class="icon"><i class="fas fa-bolt"></i></span> Priority
         </div>
-        <div style="margin-left: 0.5em;">: <span class="tag is-warning is-light" style="font-size:1em;">{% if object.priority == 2 %}High{% elif object.priority == 1 %}Medium{% else %}Low{% endif %}</span></div>
+        <div style="margin-left: 0.5em;">: <span style="font-size:1em;">{% if object.priority == 2 %}High{% elif object.priority == 1 %}Medium{% else %}Low{% endif %}</span></div>
       </div>
       <div style="display: flex; align-items: center;">
         <div style="min-width: 160px; font-weight:bold; color:#000;">

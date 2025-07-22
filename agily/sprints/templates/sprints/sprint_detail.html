@@ -34,7 +34,7 @@
         </a>
         {% endif %}
       </div>
-
+      {% if user.is_superuser or is_project_admin or is_tester %}
       <div class="level-item">
         <div class="field has-addons">
           <p class="control">
@@ -50,6 +50,7 @@
           </p>
         </div>
       </div>
+      {% endif %}
     </div>
   </nav>
 
@@ -121,6 +122,7 @@
 
       <!-- Right side -->
       <div class="level-right">
+        {% if user.is_superuser or is_project_admin or is_tester %}
         {% for field in filters_form.visible_fields %}
           <div class="level-item bulk-action">
             <div class="field">
@@ -132,6 +134,8 @@
             </div>
           </div>
         {% endfor %}
+        {% endif %}
+        {% if user.is_superuser or is_project_admin or is_tester %}
         <div class="level-item bulk-action">
             <div class="field has-addons">
                 <p class="control">
@@ -144,7 +148,8 @@
                 </p>
             </div>
         </div>
-
+        {% endif %}
+        {% if user.is_superuser or is_project_admin or is_tester %}
         <div class="level-item">
             <div class="field has-addons">
                 <p class="control">
@@ -157,7 +162,7 @@
                 </p>
             </div>
         </div>
-
+        {% endif %}
        
     </nav>
 
@@ -181,7 +186,9 @@
             <th><abbr title="Points">Pts</abbr></th>
             <th>Requester</th>
             <th>Assignee</th>
+            {% if user.is_superuser or is_project_admin or is_tester %}
             <th>Actions</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -213,6 +220,7 @@
             <td>{{ story.points }}</td>
             <td>{{ story.requester.username }}</td>
             <td>{{ story.assignee.username }}</td>
+            {% if user.is_superuser or is_project_admin or is_tester %}
             <td>
               <a class="button is-link is-small is-outlined" href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit">
                 <span class="icon is-small">
@@ -221,6 +229,7 @@
                 <small>edit</small>
               </a>
             </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
