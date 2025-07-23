@@ -5,6 +5,10 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
+from django.contrib.auth import login
+from .forms import UserRegistrationForm
+from django.views.generic.edit import FormView
+import logging
 
 from .models import User
 
@@ -91,3 +95,23 @@ class UserListView(LoginRequiredMixin, ListView):
     # These next two lines tell the view to index lookups by username
     slug_field = "username"
     slug_url_kwarg = "username"
+
+
+logger = logging.getLogger(__name__)
+
+class UserRegisterView(FormView):
+    form_class = UserRegistrationForm
+    template_name = 'registration/register.html'
+    success_url = '/'
+
+    def dispatch(self, request, *args, **kwargs):
+        logger.warning('UserRegisterView dispatch called: method=%s, path=%s, user=%s', request.method, request.path, request.user)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        user = form.save()
+        messages.success(self.request, 'Registration successful! Please log in.')
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('login')

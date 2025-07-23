@@ -255,7 +255,9 @@ SOCIALACCOUNT_ADAPTER = "agily.users.adapters.SocialAccountAdapter"
 # Custom user app defaults
 # Select the correct user model
 AUTH_USER_MODEL = "users.User"
-LOGIN_REDIRECT_URL = "/workspaces/select/"
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # SLUGLIFIER
 AUTOSLUG_SLUGIFY_FUNCTION = "slugify.slugify"
@@ -298,28 +300,16 @@ WATCHMAN_CHECKS = (
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
 LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
-    "formatters": {
-        "verbose": {"format": "%(levelname)s [%(asctime)s] %(name)s %(message)s"},
-    },
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
         },
     },
-    "loggers": {
-        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": True},
-        "django.security.DisallowedHost": {"level": "ERROR", "handlers": ["console"], "propagate": True},
-        "agily": {
-            "handlers": ["console"],
-            "level": env("LOGGING_LOGGER_LEVEL", default="ERROR"),
-            "formatter": "verbose",
-            "propagate": True,
-        },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
     },
 }
 
@@ -390,3 +380,7 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
+
+# SESSION CONFIGURATION
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database-backed sessions (recommended)
+# SESSION_COOKIE_SECURE = True  # Uncomment this in production if using HTTPS

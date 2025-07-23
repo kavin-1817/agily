@@ -4,12 +4,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.views import defaults as default_views
+from django.http import HttpResponse
 
 from agily.workspaces.views import workspace_index
-from agily.users.views import CustomLoginView, CustomLogoutView
+from agily.users.views import CustomLoginView, CustomLogoutView, UserRegisterView
 from agily.views import (
     ProjectListView, ProjectCreateView, ProjectDetailView, IssueGlobalListView, IssueGlobalCreateView,
-    upload_issue_attachment, download_issue_attachment, delete_issue_attachment, ProjectUpdateView, IssueGlobalUpdateView, IssueGlobalDetailView, IssueGlobalDeleteView, ProjectDeleteView
+    upload_issue_attachment, download_issue_attachment, delete_issue_attachment, ProjectUpdateView, IssueGlobalUpdateView, IssueGlobalDetailView, IssueGlobalDeleteView, ProjectDeleteView, public_test_view
 )
 from agily.stories.views import StoryDeleteView, EpicDeleteView
 
@@ -23,6 +24,7 @@ urlpatterns = [
     path("logout/", CustomLogoutView.as_view(), name="logout"),
     # User management
     re_path(r"^users/", include("agily.users.urls")),
+    path('signup/', UserRegisterView.as_view(), name='signup'),
     # App
     path("projects/", ProjectListView.as_view(), name="project-list"),
     path("projects/add/", ProjectCreateView.as_view(), name="project-add"),
@@ -49,6 +51,8 @@ urlpatterns = [
     path("<workspace>/issues/<int:pk>/edit/", IssueGlobalUpdateView.as_view(), name="workspace-issue-edit"),
     path("<workspace>/issues/<int:pk>/", IssueGlobalDetailView.as_view(), name="workspace-issue-detail"),
     path("<workspace>/issues/<int:pk>/delete/", IssueGlobalDeleteView.as_view(), name="workspace-issue-delete"),
+    path('test-public/', public_test_view, name='public-test'),
+    path('signup-test/', lambda request: HttpResponse('Signup test view works.'), name='signup-test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

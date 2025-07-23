@@ -18,6 +18,7 @@ from datetime import datetime
 from .models import Project, Issue, IssueAttachment
 from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm
 from agily.workspaces.models import Workspace
+from agily.users.forms import UserRegistrationForm
 
 
 class BaseListView(ListView):
@@ -200,6 +201,9 @@ class IssueGlobalListView(BaseListView):
         project_id = self.request.GET.get("project")
         if project_id:
             qs = qs.filter(project_id=project_id)
+        assignee_id = self.request.GET.get("assignee")
+        if assignee_id:
+            qs = qs.filter(assignee_id=assignee_id)
         issue_id = self.request.GET.get("id")
         if issue_id:
             qs = qs.filter(id=issue_id)
@@ -224,6 +228,12 @@ class IssueGlobalListView(BaseListView):
             context["projects"] = Project.objects.all()
         context["project"] = None
         context["global_issues"] = not bool(self.kwargs.get("workspace"))
+        # Add assignees for filter dropdown
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        assignees = User.objects.filter(is_active=True, assigned_issues__isnull=False).distinct().order_by("username")
+        context["assignees"] = assignees
+        context["selected_assignee_id"] = self.request.GET.get("assignee", "")
         return context
 
 @method_decorator(login_required, name="dispatch")
@@ -452,3 +462,7 @@ def delete_issue_attachment(request, pk):
     request.session.modified = True
     
     return render(request, "projects/issue_attachment_confirm_delete.html", {"attachment": attachment})
+
+def public_test_view(request):
+    form = UserRegistrationForm()
+    return render(request, 'registration/register.html', {'form': form})

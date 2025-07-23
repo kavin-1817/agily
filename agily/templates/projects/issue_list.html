@@ -29,6 +29,17 @@
                 {% endfor %}
               </select>
             </div>
+            <label for="assignee-filter" style="font-weight: 600; margin-bottom: 0; font-size: 0.98em;">Assignee:</label>
+            <div class="select" style="max-width: 120px; font-size: 0.98em;">
+              <select name="assignee" id="assignee-filter" style="min-width: 80px; font-size: 0.98em; padding: 0.3em 0.7em;">
+                <option value="">All</option>
+                {% for assignee in assignees %}
+                  <option value="{{ assignee.id }}" {% if assignee.id|stringformat:'s' == selected_assignee_id|stringformat:'s' %}selected{% endif %}>
+                    {{ assignee.name|default:assignee.username }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
             <button type="submit" class="button is-link" style="padding: 0.3em 0.9em; font-size: 0.98em;">Filter</button>
           </form>
           {% if is_tester or is_project_admin or user.is_superuser %}
@@ -62,8 +73,8 @@
             <td>{{ issue.get_severity_display }}</td>
             <td>{{ issue.requester }}</td>
             <td>{{ issue.assignee }}</td>
-            <td>{{ issue.created_at|date:'Y-m-d H:i:s' }}</td>
-            <td>{{ issue.updated_at|date:'Y-m-d H:i:s' }}</td>
+            <td><span class="datetime-local" data-utc="{{ issue.created_at|date:'c' }}">{{ issue.created_at|date:'Y-m-d H:i:s' }}</span></td>
+            <td><span class="datetime-local" data-utc="{{ issue.updated_at|date:'c' }}">{{ issue.updated_at|date:'Y-m-d H:i:s' }}</span></td>
             <td>
               <a href="{% if current_workspace %}{% url 'workspace-issue-detail' current_workspace issue.pk %}{% else %}{% url 'global-issue-detail' pk=issue.pk %}{% endif %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
               {% if is_tester or is_developer or is_project_admin or user.is_superuser %}
@@ -86,4 +97,20 @@
       {% include "paginator.html" %}
     </div>
   </div>
+  <script>
+    function convertAllDateTimes() {
+      document.querySelectorAll('.datetime-local').forEach(function(el) {
+        var utc = el.getAttribute('data-utc');
+        if (utc) {
+          var local = new Date(utc);
+          el.textContent = local.toLocaleString();
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', convertAllDateTimes);
+    // For htmx navigation (if used)
+    if (window.htmx) {
+      document.body.addEventListener('htmx:afterSwap', convertAllDateTimes);
+    }
+  </script>
 {% endblock %} 

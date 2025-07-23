@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}agily - Login{% endblock %}
+{% block title %}Register - Agily{% endblock %}
 
 {% block content %}
   <div class="login-page-outer">
@@ -9,19 +9,20 @@
     <div class="login-card">
       <div class="login-card-content">
         <img src="/static/images/agily-logo1.png" alt="Agily Logo" style="width: 110px; height: 110px; margin-bottom: 2.2rem; background: transparent; display: block;">
-        <h2 class="login-title">Welcome to Agily</h2>
-        <div class="login-subtitle">Sign in to supercharge your agile workflow</div>
+        <h2 class="login-title">Create your Agily account</h2>
+        <div class="login-subtitle">Sign up to get started</div>
         {% if form.errors %}
           <div class="notification is-danger">
             <button class="delete" onclick="this.parentElement.remove()"></button>
-            <p><strong>Login Error:</strong></p>
-            {% if form.non_field_errors %}
-              {% for error in form.non_field_errors %}
+            <p><strong>Registration Error:</strong></p>
+            {% for field in form %}
+              {% for error in field.errors %}
                 <p>{{ error }}</p>
               {% endfor %}
-            {% else %}
-              <p>Please enter a correct username and password. Note that both fields may be case-sensitive.</p>
-            {% endif %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
           </div>
         {% endif %}
         <form method="post" class="login-form-modern">
@@ -48,11 +49,11 @@
             </div>
           {% endfor %}
           <div class="login-btn-row">
-            <button class="button login-btn-modern" type="submit">Login</button>
+            <button class="button login-btn-modern" type="submit">Register</button>
           </div>
         </form>
         <div style="margin-top: 1.5rem; text-align: center;">
-          Don't have an account? <a href="{% url 'signup' %}">Register</a>
+          Already have an account? <a href="{% url 'login' %}">Login</a>
         </div>
       </div>
     </div>
@@ -185,4 +186,4 @@
       }
     }
   </style>
-{% endblock %}
+{% endblock %} 
