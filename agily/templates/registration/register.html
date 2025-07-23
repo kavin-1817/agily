@@ -40,8 +40,24 @@
                 </div>
               {% endif %}
               <label class="label login-label-modern">{{ field.label_tag }}</label>
-              <div class="control login-control-modern">
-                {{ field|add_class:'login-input-modern' }}
+              <div class="control login-control-modern" style="position: relative; width: 100%;">
+                {% if field.field.widget.input_type == 'password' %}
+                  {% if field.name == 'password1' %}
+                    {{ field|add_class:'login-input-modern'|attr:'id=password1-input' }}
+                    <span class="icon is-small" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer;" onclick="togglePasswordVisibility('password1-input', 'toggle-password1-icon')">
+                      <i id="toggle-password1-icon" class="fas fa-eye"></i>
+                    </span>
+                  {% elif field.name == 'password2' %}
+                    {{ field|add_class:'login-input-modern'|attr:'id=password2-input' }}
+                    <span class="icon is-small" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer;" onclick="togglePasswordVisibility('password2-input', 'toggle-password2-icon')">
+                      <i id="toggle-password2-icon" class="fas fa-eye"></i>
+                    </span>
+                  {% else %}
+                    {{ field|add_class:'login-input-modern' }}
+                  {% endif %}
+                {% else %}
+                  {{ field|add_class:'login-input-modern' }}
+                {% endif %}
               </div>
               {% if field.help_text %}
                 <p class="help">{{ field.help_text|safe }}</p>
@@ -186,4 +202,19 @@
       }
     }
   </style>
+  <script>
+    function togglePasswordVisibility(inputId, iconId) {
+      var input = document.getElementById(inputId);
+      var icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+  </script>
 {% endblock %} 

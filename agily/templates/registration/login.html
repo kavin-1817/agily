@@ -39,8 +39,15 @@
                 </div>
               {% endif %}
               <label class="label login-label-modern">{{ field.label_tag }}</label>
-              <div class="control login-control-modern">
-                {{ field|add_class:'login-input-modern' }}
+              <div class="control login-control-modern" style="position: relative; width: 100%;">
+                {% if field.field.widget.input_type == 'password' %}
+                  {{ field|add_class:'login-input-modern'|attr:'id=password-input' }}
+                  <span class="icon is-small" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer;" onclick="togglePasswordVisibility()">
+                    <i id="toggle-password-icon" class="fas fa-eye"></i>
+                  </span>
+                {% else %}
+                  {{ field|add_class:'login-input-modern' }}
+                {% endif %}
               </div>
               {% if field.help_text %}
                 <p class="help">{{ field.help_text|safe }}</p>
@@ -185,4 +192,19 @@
       }
     }
   </style>
+  <script>
+    function togglePasswordVisibility() {
+      var input = document.getElementById('password-input');
+      var icon = document.getElementById('toggle-password-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+  </script>
 {% endblock %}
