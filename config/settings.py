@@ -122,15 +122,12 @@ MANAGERS = ADMINS
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    "default": env.db("DJANGO_DATABASE_URL", default="mysql://root:password@localhost:3306/agily"),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(ROOT_DIR.path("db.sqlite3")),
+    }
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
-
-# MySQL specific settings
-DATABASES["default"]["OPTIONS"] = {
-    "charset": "utf8mb4",
-    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-}
+# Removed MySQL specific settings for SQLite3
 
 
 # GENERAL CONFIGURATION
