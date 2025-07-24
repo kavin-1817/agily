@@ -12,3 +12,5 @@ mysqlclient
 pytz
 sentry-sdk
 whitenoise 
+
+django-widget-tweaks 
