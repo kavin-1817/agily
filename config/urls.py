@@ -8,10 +8,15 @@ from django.http import HttpResponse
 
 from agily.workspaces.views import workspace_index
 from agily.users.views import CustomLoginView, CustomLogoutView, UserRegisterView
+# Add these lines to the imports at the top
 from agily.views import (
     ProjectListView, ProjectCreateView, ProjectDetailView, IssueGlobalListView, IssueGlobalCreateView,
-    upload_issue_attachment, download_issue_attachment, delete_issue_attachment, ProjectUpdateView, IssueGlobalUpdateView, IssueGlobalDetailView, IssueGlobalDeleteView, ProjectDeleteView, public_test_view
+    upload_issue_attachment, download_issue_attachment, delete_issue_attachment, ProjectUpdateView, 
+    IssueGlobalUpdateView, IssueGlobalDetailView, IssueGlobalDeleteView, ProjectDeleteView, public_test_view,
+    IssueExportView, IssueImportView  # Add these two imports
 )
+
+# Add these to your urlpatterns
 from agily.stories.views import StoryDeleteView, EpicDeleteView
 
 
@@ -26,6 +31,7 @@ urlpatterns = [
     re_path(r"^users/", include("agily.users.urls")),
     path('signup/', UserRegisterView.as_view(), name='signup'),
     # App
+    path('dashboard/', include('dashboard.urls')),
     path("projects/", ProjectListView.as_view(), name="project-list"),
     path("projects/add/", ProjectCreateView.as_view(), name="project-add"),
     path("projects/<int:pk>/", ProjectDetailView.as_view(), name="project-detail"),
@@ -47,6 +53,9 @@ urlpatterns = [
     path(r"", workspace_index, name="workspace_index"),  # disabled for now, until we finish all the features
     # Workspace-aware Issues
     path("<workspace>/issues/", IssueGlobalListView.as_view(), name="workspace-issue-list"),
+    # Add these two lines
+    path("<workspace>/issues/export/", IssueExportView.as_view(), name="workspace-issue-export"),
+    path("<workspace>/issues/import/", IssueImportView.as_view(), name="workspace-issue-import"),
     path("<workspace>/issues/add/", IssueGlobalCreateView.as_view(), name="workspace-issue-add"),
     path("<workspace>/issues/<int:pk>/edit/", IssueGlobalUpdateView.as_view(), name="workspace-issue-edit"),
     path("<workspace>/issues/<int:pk>/", IssueGlobalDetailView.as_view(), name="workspace-issue-detail"),

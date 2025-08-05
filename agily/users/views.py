@@ -20,6 +20,11 @@ class CustomLoginView(DjangoLoginView):
     template_name = 'registration/login.html'
     form_class = AuthenticationForm
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hide_main_menu'] = True
+        return context
+    
     def form_invalid(self, form):
         """
         Handle invalid form submission with better error messages.

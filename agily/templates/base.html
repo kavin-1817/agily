@@ -4,12 +4,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{% static 'images/agily-logo1.png' %}">
     {% block extra_head %}
     {% endblock %}
     <title>{% block page_title %}{{ current_site.name }} - Simple Project Management System{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-calendar@6.0.9/dist/css/bulma-calendar.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-tagsinput@1.0.3/dist/css/bulma-tagsinput.min.css">
+    <link rel="stylesheet" href="{% static 'css/bulma-tagsinput.min.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-checkradio@2.1.1/dist/css/bulma-checkradio.min.css">
     <link rel="stylesheet" href="{% static 'css/default.css' %}">
     <!-- softwig.css removed: using only default and Bulma UI -->
@@ -40,50 +41,90 @@
       </div>
 
       <div id="navbarBasicExample" class="navbar-menu">
-        <div class="navbar-start">
-          <a class="navbar-item" href="/projects/">Projects</a>
-          {% if current_workspace %}
-          <a class="navbar-item" href="{% url 'stories:epic-list' current_workspace %}">
-            Product Backlog
-          </a>
-          <a class="navbar-item" href="{% url 'sprints:sprint-list' current_workspace %}">
-            Sprints
-          </a>
-          <a class="navbar-item" href="{% url 'stories:story-list' current_workspace %}">
-            Stories
-          </a>
-          {% endif %}
-          <a class="navbar-item" href="{% if current_workspace %}{% url 'workspace-issue-list' current_workspace %}{% else %}/issues/{% endif %}">Issues</a>
-        </div>
+  <div class="navbar-start">
+    <a class="navbar-item" href="{% url 'dashboard:index' %}">
+      <span class="icon">
+        <i class="fas fa-tachometer-alt"></i>
+      </span>
+      <span>Dashboard</span>
+    </a>
+    
+    <a class="navbar-item" href="/projects/">
+      <span class="icon">
+        <i class="fas fa-project-diagram"></i>
+      </span>
+      <span>Projects</span>
+    </a>
+    
+    {% if current_workspace %}
+    <a class="navbar-item" href="{% url 'stories:epic-list' current_workspace %}">
+      <span class="icon">
+        <i class="fas fa-layer-group"></i>
+      </span>
+      <span>Product Backlog</span>
+    </a>
+    
+    <a class="navbar-item" href="{% url 'sprints:sprint-list' current_workspace %}">
+      <span class="icon">
+        <i class="fas fa-rocket"></i>
+      </span>
+      <span>Sprints</span>
+    </a>
+    
+    <a class="navbar-item" href="{% url 'stories:story-list' current_workspace %}">
+      <span class="icon">
+        <i class="fas fa-tasks"></i>
+      </span>
+      <span>Stories</span>
+    </a>
+    {% endif %}
+    
+    <a class="navbar-item" href="{% if current_workspace %}{% url 'workspace-issue-list' current_workspace %}{% else %}/issues/{% endif %}">
+      <span class="icon">
+        <i class="fas fa-bug"></i>
+      </span>
+      <span>Issues</span>
+    </a>
+  </div>
 
-        <div class="navbar-end">
-          <div class="level-right">
-            <div class="navbar-item">
-              <div class="buttons">
-                <div class="navbar-item has-dropdown is-hoverable">
-                  <a class="navbar-link" href="#">
-                    <span class="account-name">{{ user.username }}</span>
-                    <span class="account-arrow"><i class="fas fa-chevron-down"></i></span>
-                  </a>
-                  <div class="navbar-dropdown">
-                    {% if user.is_staff %}
-                    <a class="navbar-item" href="{% url 'admin:index' %}" target="_blank">
-                      Admin
-                    </a>
-                    {% endif %}
-                    <form method="post" action="{% url 'logout' %}" class="navbar-item">
-                      {% csrf_token %}
-                      <button class="button" type="submit" onclick="event.preventDefault(); this.form.submit();">
-                        Logout
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
+  <div class="navbar-end">
+    <div class="level-right">
+      <div class="navbar-item">
+        <div class="buttons">
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link" href="#">
+              <span class="icon">
+                <i class="fas fa-user"></i>
+              </span>
+              <span class="account-name">{{ user.username }}</span>
+              <span class="account-arrow"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="navbar-dropdown">
+              {% if user.is_staff %}
+              <a class="navbar-item" href="{% url 'admin:index' %}" target="_blank">
+                <span class="icon">
+                  <i class="fas fa-cogs"></i>
+                </span>
+                <span>Admin</span>
+              </a>
+              {% endif %}
+              <form method="post" action="{% url 'logout' %}" class="navbar-item">
+                {% csrf_token %}
+                <button class="button" type="submit" onclick="event.preventDefault(); this.form.submit();">
+                  <span class="icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                  </span>
+                  <span>Logout</span>
+                </button>
+              </form>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
     </nav>
     {% endif %}
 

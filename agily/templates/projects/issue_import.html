@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Import Issues{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="section">
+    <h1 class="title">Import Issues</h1>
+    
+    <div class="box">
+      <div class="content">
+        <h4>Instructions</h4>
+        <p>Upload an Excel file (.xlsx) with the following columns:</p>
+        <ul>
+          <li><strong>title</strong> (required): The issue title</li>
+          <li><strong>description</strong>: The issue description</li>
+          <li><strong>status</strong>: One of 'open', 'resolved', 'closed' (defaults to 'open')</li>
+          <li><strong>severity</strong>: One of 'low', 'medium', 'high', 'critical' (defaults to 'medium')</li>
+          <li><strong>requester</strong>: Username of the requester (must exists in the system)</li>
+          <li><strong>assignee</strong>: Username of the assignee (if exists in the system)</li>
+          
+        </ul>
+        <p>You can <a href="{% if current_workspace %}{% url 'workspace-issue-export' current_workspace %}{% else %}{% url 'global-issue-export' %}{% endif %}">export current issues</a> to see the expected format.</p>
+      </div>
+      
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="field">
+          <label class="label">{{ field.label }}</label>
+          <div class="control">
+            {{ field }}
+          </div>
+          {% if field.help_text %}
+          <p class="help">{{ field.help_text }}</p>
+          {% endif %}
+          {% if field.errors %}
+          <p class="help is-danger">{{ field.errors }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Import</button>
+            <a href="{% if current_workspace %}{% url 'workspace-issue-list' current_workspace %}{% else %}{% url 'global-issue-list' %}{% endif %}" class="button is-light">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

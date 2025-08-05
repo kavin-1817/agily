@@ -11,7 +11,10 @@
       </div>
       <div class="level-right">
         {% if user.is_superuser %}
-        <a class="button is-primary" href="{% url 'project-add' %}" style="margin-right: 0.5em;">Add Project</a>
+        <a class="button is-link" href="{% url 'project-add'%}">
+            <span class="icon is-small"><i class="fas fa-plus"></i></span>
+            <small>Add project</small>
+          </a>
         {% endif %}
       </div>
     </div>
@@ -35,8 +38,8 @@
               {{ project.description|default:'' }}
             </td>
             <td>{{ project.project_admin|default:"Not assigned" }}</td>
-            <td>{{ project.created_at|date:'Y-m-d H:i:s' }}</td>
-            <td>{{ project.updated_at|date:'Y-m-d H:i:s' }}</td>
+            <td><span class="datetime-local" data-utc="{{ project.created_at|date:'Y-m-d\\TH:i:s\\Z' }}">{{ project.created_at }}</span></td>
+            <td><span class="datetime-local" data-utc="{{ project.updated_at|date:'Y-m-d\\TH:i:s\\Z' }}">{{ project.updated_at }}</span></td>
             <td>
               <a href="{% url 'project-detail' pk=project.id %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;">
                 <i class="fas fa-eye" style="color:white;"></i>

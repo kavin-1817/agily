@@ -17,6 +17,7 @@
             <small>Search</small>
           </button>
         </form>
+		<span class="tag is-info is-medium level-item" style="margin-left: 1em; align-self: center;">Total: {{ paginator.count }}</span>
       </div>
       <div class="level-right">
         {% if is_project_admin or user_is_superuser %}
@@ -42,7 +43,7 @@
       <tbody>
         {% for sprint in object_list %}
           <tr>
-            <td>#{{ sprint.id }}</td>
+            <td>{{ sprint.id }}</td>
             <td><b>{{ sprint.title }}</b></td>
             <td>{{ sprint.starts_at|date:"Y-m-d" }}</td>
             <td>{{ sprint.ends_at|date:"Y-m-d" }}</td>

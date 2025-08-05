@@ -17,6 +17,7 @@
               <small>Search</small>
             </button>
           </form>
+		  <span class="tag is-info is-medium level-item" style="margin-left: 1em; align-self: center;">Total: {{ paginator.count }}</span>
         </div>
         <div class="level-right">
           {% if is_project_admin or user.is_superuser %}
@@ -35,7 +36,6 @@
                 <th>Product Backlog</th>
                 <th>State</th>
                 <th>Priority</th>
-                <th><abbr title="Total Points">Pts</abbr></th>
                 <th>Stories</th>
                 <th>Owner</th>
                 <th>Actions</th>
@@ -46,7 +46,7 @@
             {% block table_body_content %}
               {% for product_backlog in object_list %}
                 <tr {% if product_backlog.is_done %}class="has-text-grey-dark"{% endif %}>
-                  <td>#{{ product_backlog.id }}</td>
+                  <td>{{ product_backlog.id }}</td>
                   <td>
                     
                       <strong>{{ product_backlog.title }}</strong><br/>
@@ -65,7 +65,6 @@
                       <span>Low</span>
                     {% endif %}
                   </td>
-                  <td>{{ product_backlog.total_points }}</td>
                   <td>{{ product_backlog.story_count }}</td>
                   <td>{{ product_backlog.owner.username }}</td>
                   <td>
@@ -81,7 +80,7 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="8">No product backlogs found.</td>
+                  <td colspan="7">No product backlogs found.</td>
                 </tr>
               {% endfor %}
             {% endblock %}

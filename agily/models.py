@@ -103,12 +103,14 @@ class Issue(models.Model):
         ("open", "Open"),
         ("resolved", "Resolved"),
         ("closed", "Closed"),
+        ("reopened", "Reopened"),
     ]
     SEVERITY_CHOICES = [
         ("low", "Low"),
         ("medium", "Medium"),
         ("high", "High"),
         ("critical", "Critical"),
+        ("stopper", "Stopper"),
     ]
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="issues")
     title = models.CharField(max_length=255)

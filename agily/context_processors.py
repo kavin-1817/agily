@@ -50,3 +50,12 @@ def user_roles(request):
         'is_developer': any(g in ['developer', 'developers'] for g in group_names),
         'is_project_admin': 'project admin' in group_names,
     }
+def dashboard_stats(request):
+    """Add dashboard-specific context"""
+    if not request.user.is_authenticated:
+        return {}
+    
+    workspace_slug = request.session.get("current_workspace")
+    context = {'current_workspace_slug': workspace_slug}
+    
+    return context

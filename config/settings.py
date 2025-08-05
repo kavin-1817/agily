@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 
 import re
 import sys
-
+import django
 import environ
 
 from celery.schedules import crontab
@@ -70,6 +70,8 @@ LOCAL_APPS = (
     "agily.workspaces",
     "agily.sprints",
     "agily.stories",
+    "dashboard",
+    'import_export',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -105,10 +107,12 @@ FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
-EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
-DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="agily <noreply@localhost>")
-EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[agily] ")
-SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'kingkavin290805@gmail.com'
+EMAIL_HOST_PASSWORD = 'yrdxhiqfhzxblidt'
+EMAIL_USE_TLS = True
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------

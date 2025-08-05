@@ -17,6 +17,7 @@
               <small>Search</small>
             </button>
           </form>
+          <span class="tag is-info is-medium level-item" style="margin-left: 1em; align-self: center;">Total: {{ paginator.count }}</span>
         </div>
         <div class="level-right">
           <form method="get" class="level-item" style="margin-right: 1em; display: flex; align-items: center; gap: 0.5em;">
@@ -43,6 +44,19 @@
             <button type="submit" class="button is-link" style="padding: 0.3em 0.9em; font-size: 0.98em;">Filter</button>
           </form>
           {% if is_tester or is_project_admin or user.is_superuser %}
+          <!-- Export Button -->
+          <a class="button is-success" href="{% if current_workspace %}{% url 'workspace-issue-export' current_workspace %}{% else %}{% url 'global-issue-export' %}{% endif %}" style="margin-left: 0.5em;" data-hx-boost="false" data-hx-ignore="true">
+            <span class="icon is-small"><i class="fas fa-file-export"></i></span>
+            <small>Export</small>
+          </a>
+          
+          <!-- Import Button -->
+          <a class="button is-info" href="{% if current_workspace %}{% url 'workspace-issue-import' current_workspace %}{% else %}{% url 'global-issue-import' %}{% endif %}" style="margin-left: 0.5em;">
+            <span class="icon is-small"><i class="fas fa-file-import"></i></span>
+            <small>Import</small>
+          </a>
+          {% endif %}
+          {% if is_tester or is_project_admin or user.is_superuser %}
             <a class="button is-primary" href="{% if current_workspace %}{% url 'workspace-issue-add' current_workspace %}{% else %}{% url 'global-issue-add' %}{% endif %}" style="margin-left: 1em;">
               <span class="icon is-small"><i class="fas fa-plus"></i></span>
               <small>Add Issue</small>
@@ -60,7 +74,7 @@
             <th>Requester</th>
             <th>Assignee</th>
             <th>Created</th>
-            <th>Updated</th>
+  
             <th>Actions</th>
           </tr>
         </thead>
@@ -68,14 +82,14 @@
           {% for issue in object_list %}
           <tr>
             <td>{{ issue.id }}</td>
-            <td><b>{{ issue.title }}</b></td>
+            <td class="title"><b>{{ issue.title|slice:":40" }}{% if issue.title|length > 40 %}...{% endif %}</b></td>
             <td>{{ issue.get_status_display }}</td>
             <td>{{ issue.get_severity_display }}</td>
             <td>{{ issue.requester }}</td>
             <td>{{ issue.assignee }}</td>
             <td><span class="datetime-local" data-utc="{{ issue.created_at|date:'c' }}">{{ issue.created_at|date:'Y-m-d H:i:s' }}</span></td>
-            <td><span class="datetime-local" data-utc="{{ issue.updated_at|date:'c' }}">{{ issue.updated_at|date:'Y-m-d H:i:s' }}</span></td>
-            <td>
+           
+            <td class="actions">
               <a href="{% if current_workspace %}{% url 'workspace-issue-detail' current_workspace issue.pk %}{% else %}{% url 'global-issue-detail' pk=issue.pk %}{% endif %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
               {% if is_tester or is_developer or is_project_admin or user.is_superuser %}
                 <a href="{% if current_workspace %}{% url 'workspace-issue-edit' current_workspace issue.pk %}{% else %}{% url 'global-issue-edit' pk=issue.pk %}{% endif %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
@@ -113,4 +127,4 @@
       document.body.addEventListener('htmx:afterSwap', convertAllDateTimes);
     }
   </script>
-{% endblock %} 
+{% endblock %}

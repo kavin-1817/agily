@@ -34,7 +34,7 @@
         </a>
         {% endif %}
       </div>
-      {% if user.is_superuser or is_project_admin or is_tester %}
+      {% if user.is_superuser or is_project_admin %}
       <div class="level-item">
         <div class="field has-addons">
           <p class="control">
@@ -81,7 +81,7 @@
           <div style="min-width: 160px; font-weight:bold; color:#000;">
             <span class="icon"><i class="fas fa-clock"></i></span> Last Update
           </div>
-          <div style="margin-left: 0.5em;">: <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time></div>
+          <div style="margin-left: 0.5em;">: <span class="datetime-local" data-utc="{{ object.updated_at|date:'c' }}">{{ object.updated_at }}</span></div>
         </div>
         <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
           <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
@@ -122,7 +122,7 @@
 
       <!-- Right side -->
       <div class="level-right">
-        {% if user.is_superuser or is_project_admin or is_tester %}
+        {% if user.is_superuser or is_project_admin %}
         {% for field in filters_form.visible_fields %}
           <div class="level-item bulk-action">
             <div class="field">
@@ -135,7 +135,7 @@
           </div>
         {% endfor %}
         {% endif %}
-        {% if user.is_superuser or is_project_admin or is_tester %}
+        {% if user.is_superuser or is_project_admin%}
         <div class="level-item bulk-action">
             <div class="field has-addons">
                 <p class="control">
@@ -149,7 +149,7 @@
             </div>
         </div>
         {% endif %}
-        {% if user.is_superuser or is_project_admin or is_tester %}
+        {% if user.is_superuser or is_project_admin%}
         <div class="level-item">
             <div class="field has-addons">
                 <p class="control">
@@ -183,10 +183,10 @@
             <th>Epic</th>
             <th>State</th>
             <th>Priority</th>
-            <th><abbr title="Points">Pts</abbr></th>
+            <th>Points</th>
             <th>Requester</th>
             <th>Assignee</th>
-            {% if user.is_superuser or is_project_admin or is_tester %}
+            {% if user.is_superuser or is_project_admin %}
             <th>Actions</th>
             {% endif %}
           </tr>
@@ -195,9 +195,9 @@
           {% for story in object_list %}
           <tr {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
             <td>
-              <div class="field">
+
                 <input type="checkbox" name="story-{{ story.id }}" />
-              </div>
+              
             </td>
             <td>#{{ story.id }}</td>
             <td>
@@ -220,7 +220,7 @@
             <td>{{ story.points }}</td>
             <td>{{ story.requester.username }}</td>
             <td>{{ story.assignee.username }}</td>
-            {% if user.is_superuser or is_project_admin or is_tester %}
+            {% if user.is_superuser or is_project_admin %}
             <td>
               <a class="button is-link is-small is-outlined" href="{% url 'stories:story-edit' current_workspace story.id %}?next={{ encoded_url }}" title="Edit">
                 <span class="icon is-small">

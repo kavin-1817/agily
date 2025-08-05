@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - {{ user_role }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="fas fa-tachometer-alt"></i>
+            Dashboard
+        </h1>
+        <div class="user-info">
+            <span class="user-role-badge">{{ user_role }}</span>
+            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+            {% if current_workspace %}
+                <span class="workspace-badge">{{ current_workspace.name }}</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% block dashboard_content %}{% endblock %}
+</div>
+{% endblock %}

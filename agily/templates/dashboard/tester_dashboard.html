@@ -1,0 +1,221 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block dashboard_content %}
+<div class="stats-grid">
+    <!-- Created Issues - Clickable -->
+    <a href="{% if current_workspace %}/{{ current_workspace.slug }}/issues/?requester={{ user.id }}{% else %}/issues/?requester={{ user.id }}{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-bug"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.created_issues }}</h3>
+            <p>Created Issues</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Assigned Stories - Clickable -->
+    <a href="{% if current_workspace %}{% url 'stories:story-list' current_workspace.slug %}?assignee={{ user.id }}{% else %}/stories/?assignee={{ user.id }}{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.assigned_stories }}</h3>
+            <p>Assigned Stories</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Critical Issues - Non-clickable warning card -->
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.critical_issues }}</h3>
+            <p>Critical Issues</p>
+        </div>
+    </div>
+    
+    <!-- Total Open Issues - Non-clickable info card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_open_issues }}</h3>
+            <p>Total Open Issues</p>
+        </div>
+    </div>
+</div>
+
+<!-- Issue and Story Status in Row -->
+<div class="dashboard-row">
+    <!-- Issue Status Breakdown -->
+    <div class="dashboard-card">
+        <h2>My Issues Status</h2>
+        <div class="status-breakdown">
+            <div class="status-item">
+                <span class="status-label">Open Issues</span>
+                <span class="status-count open">{{ stats.open_issues }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Resolved Issues</span>
+                <span class="status-count resolved">{{ stats.resolved_issues }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Closed Issues</span>
+                <span class="status-count closed">{{ stats.closed_issues }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Story Status Breakdown -->
+    <div class="dashboard-card">
+        <h2>My Stories Status</h2>
+        <div class="status-breakdown">
+            <div class="status-item">
+                <span class="status-label">Pending Stories</span>
+                <span class="status-count open">{{ stats.pending_stories }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">In Progress Stories</span>
+                <span class="status-count resolved">{{ stats.in_progress_stories }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Completed Stories</span>
+                <span class="status-count closed">{{ stats.completed_stories }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-row">
+    <!-- Created Issues -->
+    <div class="dashboard-card">
+        <h2>
+            My Open Issues
+            {% if current_workspace %}
+                <a href="/{{ current_workspace.slug }}/issues/?requester={{ user.id }}" class="view-all-link">
+                    View All
+                </a>
+            {% endif %}
+        </h2>
+        <div class="assignment-list">
+            {% for issue in created_issues %}
+            <div class="assignment-item">
+                <div class="assignment-icon">
+                    <i class="fas fa-bug severity-{{ issue.severity }}"></i>
+                </div>
+                <div class="assignment-content">
+                    {% if current_workspace %}
+                        <a href="/{{ current_workspace.slug }}/issues/{{ issue.pk }}/">
+                            {{ issue.title }}
+                        </a>
+                    {% else %}
+                        <a href="/issues/{{ issue.pk }}/">
+                            {{ issue.title }}
+                        </a>
+                    {% endif %}
+                    <span class="assignment-meta">{{ issue.project.name }} • {{ issue.severity|upper }}</span>
+                </div>
+                <div class="assignment-status">
+                    <span class="status-badge status-{{ issue.status }}">{{ issue.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-data">No issues created by you</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Assigned Stories -->
+    <div class="dashboard-card">
+        <h2>
+            My Active Stories
+            {% if current_workspace %}
+                <a href="{% url 'stories:story-list' current_workspace.slug %}?assignee={{ user.id }}" class="view-all-link">
+                    View All
+                </a>
+            {% endif %}
+        </h2>
+        <div class="assignment-list">
+            {% for story in assigned_stories %}
+            <div class="assignment-item">
+                <div class="assignment-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="assignment-content">
+                    {% if current_workspace %}
+                        <a href="{% url 'stories:story-detail' current_workspace.slug story.pk %}">
+                            {{ story.title }}
+                        </a>
+                    {% else %}
+                        <a href="/stories/{{ story.pk }}/">
+                            {{ story.title }}
+                        </a>
+                    {% endif %}
+                    <span class="assignment-meta">
+                        {% if story.project %}{{ story.project.name }}{% endif %} • {{ story.points|default:"0" }} points
+                    </span>
+                </div>
+                <div class="assignment-status">
+                    <span class="status-badge">{{ story.state.name|default:"No Status" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-data">No stories assigned to you</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Progress Summary -->
+<div class="dashboard-card">
+    <h2>Issue Resolution Progress</h2>
+    <div class="progress-summary">
+        <div class="progress-item">
+            <span class="progress-label">Issue Resolution Rate</span>
+            <div class="progress-bar">
+                {% if stats.created_issues > 0 %}
+                    {% widthratio stats.resolved_issues stats.created_issues 100 as resolved_percentage %}
+                    <div class="progress-fill" style="width: {{ resolved_percentage }}%"></div>
+                {% else %}
+                    <div class="progress-fill" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <span class="progress-text">
+                {{ stats.resolved_issues }}/{{ stats.created_issues }} resolved
+                {% if stats.created_issues > 0 %}
+                    ({% widthratio stats.resolved_issues stats.created_issues 100 %}%)
+                {% else %}
+                    (0%)
+                {% endif %}
+            </span>
+        </div>
+        <div class="progress-item">
+            <span class="progress-label">Story Completion Rate</span>
+            <div class="progress-bar">
+                {% if stats.assigned_stories > 0 %}
+                    {% widthratio stats.completed_stories stats.assigned_stories 100 as completed_percentage %}
+                    <div class="progress-fill" style="width: {{ completed_percentage }}%"></div>
+                {% else %}
+                    <div class="progress-fill" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <span class="progress-text">
+                {{ stats.completed_stories }}/{{ stats.assigned_stories }} completed
+                {% if stats.assigned_stories > 0 %}
+                    ({% widthratio stats.completed_stories stats.assigned_stories 100 %}%)
+                {% else %}
+                    (0%)
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block dashboard_content %}
+<div class="stats-grid">
+    <!-- Assigned Issues - Clickable -->
+    <a href="{% if current_workspace %}/{{ current_workspace.slug }}/issues/?assignee={{ user.id }}{% else %}/issues/?assignee={{ user.id }}{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-bug"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.assigned_issues }}</h3>
+            <p>Assigned Issues</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Assigned Stories - Clickable -->
+    <a href="{% if current_workspace %}{% url 'stories:story-list' current_workspace.slug %}?assignee={{ user.id }}{% else %}/stories/?assignee={{ user.id }}{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.assigned_stories }}</h3>
+            <p>Assigned Stories</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Critical Issues - Non-clickable warning card -->
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.critical_issues }}</h3>
+            <p>Critical Issues</p>
+        </div>
+    </div>
+    
+    <!-- Completed Stories - Non-clickable success card -->
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.completed_stories }}</h3>
+            <p>Completed Stories</p>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-row">
+    <!-- Assigned Issues -->
+    <div class="dashboard-card">
+        <h2>
+            My Open Issues
+            {% if current_workspace %}
+                <a href="/{{ current_workspace.slug }}/issues/?assignee={{ user.id }}" class="view-all-link">
+                    View All
+                </a>
+            {% endif %}
+        </h2>
+        <div class="assignment-list">
+            {% for issue in assigned_issues %}
+            <div class="assignment-item">
+                <div class="assignment-icon">
+                    <i class="fas fa-bug severity-{{ issue.severity }}"></i>
+                </div>
+                <div class="assignment-content">
+                    {% if current_workspace %}
+                        <a href="/{{ current_workspace.slug }}/issues/{{ issue.pk }}/">
+                            {{ issue.title }}
+                        </a>
+                    {% else %}
+                        <a href="/issues/{{ issue.pk }}/">
+                            {{ issue.title }}
+                        </a>
+                    {% endif %}
+                    <span class="assignment-meta">
+                        {{ issue.project.name }} • {{ issue.severity|upper }}
+                    </span>
+                </div>
+                <div class="assignment-status">
+                    <span class="status-badge status-{{ issue.status }}">{{ issue.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-data">No open issues assigned to you</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Assigned Stories -->
+    <div class="dashboard-card">
+        <h2>
+            My Active Stories
+            {% if current_workspace %}
+                <a href="{% url 'stories:story-list' current_workspace.slug %}?assignee={{ user.id }}" class="view-all-link">
+                    View All
+                </a>
+            {% endif %}
+        </h2>
+        <div class="assignment-list">
+            {% for story in assigned_stories %}
+            <div class="assignment-item">
+                <div class="assignment-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="assignment-content">
+                    {% if current_workspace %}
+                        <a href="{% url 'stories:story-detail' current_workspace.slug story.pk %}">
+                            {{ story.title }}
+                        </a>
+                    {% else %}
+                        <a href="/stories/{{ story.pk }}/">
+                            {{ story.title }}
+                        </a>
+                    {% endif %}
+                    <span class="assignment-meta">
+                        {% if story.project %}{{ story.project.name }}{% endif %} • {{ story.points|default:"0" }} points
+                    </span>
+                </div>
+                <div class="assignment-status">
+                    <span class="status-badge">{{ story.state.name|default:"No Status" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-data">No active stories assigned to you</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-row">
+    <!-- Progress Summary -->
+    <div class="dashboard-card">
+        <h2>My Progress</h2>
+        <div class="progress-summary">
+            <div class="progress-item">
+                <span class="progress-label">Issues</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ stats.issues_progress }}%"></div>
+                </div>
+                <span class="progress-text">{{ stats.resolved_issues }}/{{ stats.assigned_issues }} resolved ({{ stats.issues_progress }}%)</span>
+            </div>
+            <div class="progress-item">
+                <span class="progress-label">Stories</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ stats.stories_progress }}%"></div>
+                </div>
+                <span class="progress-text">{{ stats.completed_stories }}/{{ stats.assigned_stories }} completed ({{ stats.stories_progress }}%)</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="dashboard-card">
+        <h2>Quick Actions</h2>
+        <div class="quick-actions">
+            {% if current_workspace %}
+                <a href="/{{ current_workspace.slug }}/issues/?assignee={{ user.id }}&status=open" class="action-button">
+                    <i class="fas fa-bug"></i>
+                    View My Issues
+                </a>
+                <a href="{% url 'stories:story-list' current_workspace.slug %}?assignee={{ user.id }}" class="action-button">
+                    <i class="fas fa-tasks"></i>
+                    View My Stories
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

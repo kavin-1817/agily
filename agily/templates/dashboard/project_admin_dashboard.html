@@ -1,0 +1,126 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block dashboard_content %}
+<div class="stats-grid">
+    <!-- Managed Projects - Clickable -->
+    <a href="/projects/" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.managed_projects }}</h3>
+            <p>Managed Projects</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Total Issues - Clickable -->
+    <a href="{% if current_workspace %}/{{ current_workspace.slug }}/issues/{% else %}/issues/{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-bug"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_issues }}</h3>
+            <p>Total Issues</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Total Stories - Clickable -->
+    <a href="{% if current_workspace %}{% url 'stories:story-list' current_workspace.slug %}{% else %}/stories/{% endif %}" class="stat-card clickable-stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.total_stories }}</h3>
+            <p>Total Stories</p>
+        </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
+    
+    <!-- Pending Issues - Non-clickable warning card -->
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ stats.pending_issues }}</h3>
+            <p>Pending Issues</p>
+        </div>
+    </div>
+</div>
+
+<!-- Issue and Story Status in Row -->
+<div class="dashboard-row">
+    <!-- Issue Status Breakdown -->
+    <div class="dashboard-card">
+        <h2>Issues Status</h2>
+        <div class="status-breakdown">
+            <div class="status-item">
+                <span class="status-label">Open Issues</span>
+                <span class="status-count open">{{ stats.pending_issues }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Resolved Issues</span>
+                <span class="status-count resolved">{{ stats.resolved_issues|default:0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Closed Issues</span>
+                <span class="status-count closed">{{ stats.closed_issues|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Story Status Breakdown -->
+    <div class="dashboard-card">
+        <h2>Stories Status</h2>
+        <div class="status-breakdown">
+            <div class="status-item">
+                <span class="status-label">Pending Stories</span>
+                <span class="status-count open">{{ stats.pending_stories|default:0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">In Progress Stories</span>
+                <span class="status-count resolved">{{ stats.in_progress_stories|default:0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Completed Stories</span>
+                <span class="status-count closed">{{ stats.completed_stories|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Issues - Full Width -->
+<div class="dashboard-card">
+    <h2>Recent Issues</h2>
+    <div class="recent-list">
+        {% for issue in recent_issues %}
+        <div class="recent-item">
+            <div class="recent-icon">
+                <i class="fas fa-bug severity-{{ issue.severity }}"></i>
+            </div>
+            <div class="recent-content">
+                {% if current_workspace %}
+                    <a href="/{{ current_workspace.slug }}/issues/{{ issue.pk }}/">{{ issue.title }}</a>
+                {% else %}
+                    <a href="/issues/{{ issue.pk }}/">{{ issue.title }}</a>
+                {% endif %}
+                <span class="recent-meta">{{ issue.project.name }} • {{ issue.created_at|timesince }} ago</span>
+            </div>
+            <div class="recent-status">
+                <span class="status-badge status-{{ issue.status }}">{{ issue.get_status_display }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <p class="no-data">No recent issues</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

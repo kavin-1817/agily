@@ -258,7 +258,7 @@ class WorkspaceSelectView(ListView):
             request.session["current_workspace"] = workspace.slug
             
             # Redirect to stories list for the selected workspace
-            return redirect("stories:story-list", workspace=workspace.slug)
+            return redirect("dashboard:index")
             
         except Workspace.DoesNotExist:
             workspaces = self.get_queryset()
