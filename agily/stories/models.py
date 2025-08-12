@@ -77,6 +77,10 @@ class Epic(ModelWithProgress):
 
     history = HistoricalRecords()
 
+    @property
+    def actual_story_count(self) -> int:
+        return self.story_set.count()
+
     def get_absolute_url(self):
         return reverse("stories:epic-detail", args=[self.workspace.slug, str(self.id)])
 
@@ -185,7 +189,7 @@ def handle_story_pre_save(sender, **kwargs):
 
             # 10 seconds till the epic changes to the new one so this will have
             # one story less
-            handle_epic_change.apply_async((previous_epic.id,), countdown=10)
+            handle_epic_change.apply_async((previous_epic.id,), countdown=1)
 
         if instance.id is None:
             previous_sprint = None
@@ -204,7 +208,7 @@ def handle_story_pre_save(sender, **kwargs):
 
             # 10 seconds till the sprint changes to the new one so this will have
             # one story less
-            handle_sprint_change.apply_async((previous_sprint.id,), countdown=10)
+            handle_sprint_change.apply_async((previous_sprint.id,), countdown=1)
 
 
 @receiver(post_save, sender=Story)

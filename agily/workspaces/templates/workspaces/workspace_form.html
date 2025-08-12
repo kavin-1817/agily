@@ -103,7 +103,7 @@
             <div class="field" style="margin-top: 2em;">
               <div style="display: flex; justify-content: center; align-items: center; gap: 1.5em;">
                 <button type="submit" class="button is-primary" style="border-radius: 8px; min-width: 120px;">{% if object %}Update{% else %}Create{% endif %} Workspace</button>
-                <a href="{{ cancel_url }}" class="button is-light" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                <a href="{% url 'workspaces:workspace-list' current_workspace %}" class="button is-light" style="border-radius: 8px; min-width: 120px;">Cancel</a>
               </div>
             </div>
           </form>

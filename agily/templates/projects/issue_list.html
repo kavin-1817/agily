@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load text_extras %}
 
 {% block page_title %}Issues{% endblock %}
 
@@ -64,16 +65,16 @@
           {% endif %}
         </div>
       </div>
-      <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+      <table class="table issue-table is-bordered is-striped is-hoverable is-fullwidth">
         <thead>
           <tr>
-            <th>ID</th>
+            <th class="id-cell">ID</th>
             <th>Title</th>
             <th>Status</th>
             <th>Severity</th>
             <th>Requester</th>
             <th>Assignee</th>
-            <th>Created</th>
+            <th>Last Update</th>
   
             <th>Actions</th>
           </tr>
@@ -81,24 +82,37 @@
         <tbody>
           {% for issue in object_list %}
           <tr>
-            <td>{{ issue.id }}</td>
-            <td class="title"><b>{{ issue.title|slice:":40" }}{% if issue.title|length > 40 %}...{% endif %}</b></td>
+            <td class="id-cell">{{ issue.id }}</td>
+            <td class="title">
+              <a href="{% if current_workspace %}{% url 'workspace-issue-detail' current_workspace issue.pk %}{% else %}{% url 'global-issue-detail' pk=issue.pk %}{% endif %}">
+                <b>{{ issue.title|truncate_title:45 }}</b>
+              </a>
+            </td>
             <td>{{ issue.get_status_display }}</td>
             <td>{{ issue.get_severity_display }}</td>
             <td>{{ issue.requester }}</td>
             <td>{{ issue.assignee }}</td>
-            <td><span class="datetime-local" data-utc="{{ issue.created_at|date:'c' }}">{{ issue.created_at|date:'Y-m-d H:i:s' }}</span></td>
+            <td>{{ issue.created_at|date:'Y-m-d' }}</td>
            
             <td class="actions">
               <a href="{% if current_workspace %}{% url 'workspace-issue-detail' current_workspace issue.pk %}{% else %}{% url 'global-issue-detail' pk=issue.pk %}{% endif %}" title="View" style="width:2.5em; height:2.5em; background:#8FA01F !important; color:white !important; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-eye' style='color:white;'></i></a>
-              {% if is_tester or is_developer or is_project_admin or user.is_superuser %}
+              {% if is_developer or is_project_admin or user.is_superuser %}
                 <a href="{% if current_workspace %}{% url 'workspace-issue-edit' current_workspace issue.pk %}{% else %}{% url 'global-issue-edit' pk=issue.pk %}{% endif %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
                 <form method="post" action="{% if current_workspace %}{% url 'workspace-issue-delete' current_workspace issue.pk %}{% else %}{% url 'global-issue-delete' issue.pk %}{% endif %}" style="display:inline;">
                   {% csrf_token %}
-                  {% if user.is_superuser or is_project_admin or is_tester %}
                   <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this issue?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class='fas fa-trash' style='color:white;'></i></button>
-                  {% endif %}
                 </form>
+              {% elif is_tester and issue.requester == user %}
+                <!-- Testers can only edit/delete issues they created -->
+                <a href="{% if current_workspace %}{% url 'workspace-issue-edit' current_workspace issue.pk %}{% else %}{% url 'global-issue-edit' pk=issue.pk %}{% endif %}?next={{ encoded_url }}" title="Edit" style="width:2.5em; height:2.5em; background:#1B4F72; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; text-decoration:none;"><i class='fas fa-edit' style='color:white;'></i></a>
+                <form method="post" action="{% if current_workspace %}{% url 'workspace-issue-delete' current_workspace issue.pk %}{% else %}{% url 'global-issue-delete' issue.pk %}{% endif %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" name="remove" value="yes" title="Remove" onclick="return confirm('Are you sure you want to remove this issue?');" style="width:2.5em; height:2.5em; background:#943126; color:white; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; padding:0;"><i class='fas fa-trash' style='color:white;'></i></button>
+                </form>
+              {% elif is_tester and issue.requester != user %}
+                <!-- Testers cannot edit/delete issues created by others - show disabled buttons with tooltip -->
+                <button onclick="showPermissionMessage('You can only edit/delete issues you created. This issue was created by {{ issue.requester }}.')" title="You can only edit/delete issues you created" style="width:2.5em; height:2.5em; background:#cccccc; color:#666; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; margin-right:0.3em; cursor:not-allowed;"><i class='fas fa-edit' style='color:#666;'></i></button>
+                <button onclick="showPermissionMessage('You can only edit/delete issues you created. This issue was created by {{ issue.requester }}.')" title="You can only edit/delete issues you created" style="width:2.5em; height:2.5em; background:#cccccc; color:#666; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:none; cursor:not-allowed;"><i class='fas fa-trash' style='color:#666;'></i></button>
               {% endif %}
             </td>
           </tr>
@@ -121,6 +135,56 @@
         }
       });
     }
+    
+    // Function to show permission restriction message
+    function showPermissionMessage(message) {
+      // Create a custom alert/modal
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+      
+      const content = document.createElement('div');
+      content.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      `;
+      
+      content.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+          <i class="fas fa-exclamation-triangle" style="color: #f39c12; font-size: 2rem;"></i>
+        </div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">Permission Restricted</h3>
+        <p style="color: #34495e; margin-bottom: 1.5rem;">${message}</p>
+        <button onclick="this.closest('.permission-modal').remove()" style="
+          background: #8FA01F;
+          color: white;
+          border: none;
+          padding: 0.7em 1.5em;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+        ">OK</button>
+      `;
+      
+      modal.className = 'permission-modal';
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+    }
+    
     document.addEventListener('DOMContentLoaded', convertAllDateTimes);
     // For htmx navigation (if used)
     if (window.htmx) {

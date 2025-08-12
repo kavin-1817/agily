@@ -13,7 +13,8 @@ from agily.views import (
     ProjectListView, ProjectCreateView, ProjectDetailView, IssueGlobalListView, IssueGlobalCreateView,
     upload_issue_attachment, download_issue_attachment, delete_issue_attachment, ProjectUpdateView, 
     IssueGlobalUpdateView, IssueGlobalDetailView, IssueGlobalDeleteView, ProjectDeleteView, public_test_view,
-    IssueExportView, IssueImportView  # Add these two imports
+    IssueExportView, IssueImportView, NotificationListView, NotificationCreateView, mark_notification_as_read,
+    get_unread_notification_count, delete_notification
 )
 
 # Add these to your urlpatterns
@@ -62,6 +63,13 @@ urlpatterns = [
     path("<workspace>/issues/<int:pk>/delete/", IssueGlobalDeleteView.as_view(), name="workspace-issue-delete"),
     path('test-public/', public_test_view, name='public-test'),
     path('signup-test/', lambda request: HttpResponse('Signup test view works.'), name='signup-test'),
+    
+    # Notification URLs
+    path('notifications/', NotificationListView.as_view(), name='notification_list'),
+    path('notifications/create/', NotificationCreateView.as_view(), name='notification_create'),
+    path('notifications/<int:notification_id>/mark-read/', mark_notification_as_read, name='mark_notification_read'),
+    path('notifications/<int:notification_id>/delete/', delete_notification, name='delete_notification'),
+    path('notifications/unread-count/', get_unread_notification_count, name='unread_notification_count'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

@@ -46,6 +46,11 @@ class Sprint(ModelWithProgress):
 
     history = HistoricalRecords()
 
+    @property
+    def actual_story_count(self) -> int:
+        from agily.stories.models import Story
+        return Story.objects.filter(sprint=self).count()
+
     def __str__(self):
         if self.workspace:
             return f"{self.title} ({self.workspace.name})"

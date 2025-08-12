@@ -8,9 +8,9 @@
 {% block table_head_content %}
   <tr>
     <th>Name</th>
-    <th>Description</th>
+    <th style="width:50%">Description</th>
     <th>Owner</th>
-    <th>Updated</th>
+    <th style="display:none"></th>
     <th>Actions</th>
   </tr>
 {% endblock %}
@@ -25,7 +25,7 @@
     </td>
     <td>{{ workspace.description }}</td>
     <td>{{ workspace.owner }}</td>
-    <td>{{ workspace.updated_at|default:'' }}</td>
+    <td>{% if workspace.updated_at %}{{ workspace.updated_at|date:'Y-m-d' }}{% endif %}</td>
     <td>
       <a class="button is-link is-outlined" href="{% url 'workspaces:workspace-edit' current_workspace workspace.id %}?next={{ encoded_url }}" title="Edit">
         <span class="icon">

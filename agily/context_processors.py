@@ -59,3 +59,13 @@ def dashboard_stats(request):
     context = {'current_workspace_slug': workspace_slug}
     
     return context
+
+
+def notifications(request):
+    """Add notification count to context"""
+    if not request.user.is_authenticated:
+        return {"unread_notifications_count": 0}
+    
+    from .models import Notification
+    count = Notification.objects.filter(user=request.user, read=False).count()
+    return {"unread_notifications_count": count}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="title">Create Notification</h1>
+    
+    <div class="box">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="field">
+                <label class="label">Message</label>
+                <div class="control">
+                    {{ form.message }}
+                </div>
+                {% if form.message.errors %}
+                    <p class="help is-danger">{{ form.message.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="field">
+                <label class="label">Link (Optional)</label>
+                <div class="control">
+                    {{ form.link }}
+                </div>
+                <p class="help">Add a URL where users will be directed when they click on this notification.</p>
+                {% if form.link.errors %}
+                    <p class="help is-danger">{{ form.link.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="field" style="margin-top: 2em; width: 100%;">
+              <div style="display: flex; justify-content: center; align-items: center; gap: 1.5em;">
+                <button type="submit" class="button is-primary">Send Notification</button>
+                <a href="{% url 'notification_list' %}" class="button is-light">Cancel</a>
+              </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

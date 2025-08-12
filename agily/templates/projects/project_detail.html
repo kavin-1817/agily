@@ -25,13 +25,13 @@
         <div style="min-width: 160px; font-weight:700; color:#000000;">
           <span class="icon"><i class="fas fa-calendar-alt"></i></span> Created
         </div>
-        <div style="margin-left: 0.5em;">: {{ object.created_at }}</div>
+        <div style="margin-left: 0.5em;">: {{ object.created_at|date:'Y-m-d' }}</div>
       </div>
       <div style="display: flex; align-items: center;">
         <div style="min-width: 160px; font-weight:700; color:#000000;">
           <span class="icon"><i class="fas fa-clock"></i></span> Last Update
         </div>
-        <div style="margin-left: 0.5em;">: <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time></div>
+        <div style="margin-left: 0.5em;">: {{ object.updated_at|date:'Y-m-d' }}</div>
       </div>
       <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
         <div style="min-width: 160px; font-weight:700; color:#000000; margin-top: 0.3em;">
@@ -45,6 +45,71 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10);">
+  <div class="card-content">
+    <h3 class="title is-5" style="margin-bottom: 1rem;">Product Backlogs</h3>
+    {% if epics %}
+      <table class="table is-striped is-fullwidth" style="border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="width:55%; border-right: 2px solid #e5e7eb; padding: 12px;">Title</th>
+            <th style="border-right: 2px solid #e5e7eb; padding: 12px;">State</th>
+            <th style="border-right: 2px solid #e5e7eb; padding: 12px;">Stories</th>
+            <th style="padding: 12px;">Last Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for epic in epics %}
+          <tr>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">
+              <a href="{% url 'stories:epic-detail' workspace_slug epic.id %}"><strong>{{ epic.title }}</strong></a>
+            </td>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">{{ epic.state }}</td>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">{{ epic.story_set.count }}</td>
+            <td style="padding: 12px;">{{ epic.updated_at|date:'Y-m-d' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="has-text-grey">No product backlogs for this project.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem; box-shadow: 0 4px 24px 0 rgba(71,85,105,0.10);">
+  <div class="card-content">
+    <h3 class="title is-5" style="margin-bottom: 1rem;">Sprints</h3>
+    {% if sprints %}
+      <table class="table is-striped is-fullwidth" style="border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="width:55%; border-right: 2px solid #e5e7eb; padding: 12px;">Title</th>
+            <th style="border-right: 2px solid #e5e7eb; padding: 12px;">Start</th>
+            <th style="border-right: 2px solid #e5e7eb; padding: 12px;">End</th>
+            <th style="border-right: 2px solid #e5e7eb; padding: 12px;">State</th>
+            <th style="padding: 12px;">Last Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sprint in sprints %}
+          <tr>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">
+              <a href="{% url 'sprints:sprint-detail' workspace_slug sprint.id %}"><strong>{{ sprint.title }}</strong></a>
+            </td>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">{{ sprint.starts_at|date:"Y-m-d" }}</td>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">{{ sprint.ends_at|date:"Y-m-d" }}</td>
+            <td style="border-right: 2px solid #e5e7eb; padding: 12px;">{{ sprint.get_state_display }}</td>
+            <td style="padding: 12px;">{{ sprint.updated_at|date:'Y-m-d' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="has-text-grey">No sprints for this project.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

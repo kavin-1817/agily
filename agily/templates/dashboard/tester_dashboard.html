@@ -41,8 +41,8 @@
         </div>
     </div>
     
-    <!-- Total Open Issues - Non-clickable info card -->
-    <div class="stat-card">
+    <!-- Total Open Issues - Clickable info card -->
+    <a href="{% if current_workspace %}/{{ current_workspace.slug }}/issues/{% else %}/issues/{% endif %}" class="stat-card clickable-stat-card">
         <div class="stat-icon">
             <i class="fas fa-clipboard-check"></i>
         </div>
@@ -50,7 +50,10 @@
             <h3>{{ stats.total_open_issues }}</h3>
             <p>Total Open Issues</p>
         </div>
-    </div>
+        <div class="stat-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+    </a>
 </div>
 
 <!-- Issue and Story Status in Row -->
@@ -113,11 +116,11 @@
                 </div>
                 <div class="assignment-content">
                     {% if current_workspace %}
-                        <a href="/{{ current_workspace.slug }}/issues/{{ issue.pk }}/">
+                        <a href="/{{ current_workspace.slug }}/issues/{{ issue.pk }}/?requester={{ user.id }}">
                             {{ issue.title }}
                         </a>
                     {% else %}
-                        <a href="/issues/{{ issue.pk }}/">
+                        <a href="/issues/{{ issue.pk }}/?requester={{ user.id }}">
                             {{ issue.title }}
                         </a>
                     {% endif %}

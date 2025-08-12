@@ -547,14 +547,31 @@ class StoryDetailView(DetailView):
 class StoryDeleteView(DeleteView):
     model = Story
     template_name = "stories/story_confirm_delete.html"
+
     def get_success_url(self):
         return reverse_lazy("stories:story-list", args=[self.kwargs["workspace"]])
+
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        if (request.user.is_superuser or "project admin" in group_names or "tester" in group_names or "testers" in group_names or "developer" in group_names or "developers" in group_names):
-            return super().dispatch(request, *args, **kwargs)
-        return HttpResponseForbidden(b"You do not have permission to delete stories.")
+        obj = self.get_object()
 
+        # Superusers and project admins can delete any story
+        if request.user.is_superuser or "project admin" in group_names:
+            return super().dispatch(request, *args, **kwargs)
+
+        # Developers can delete any story (as per your current logic)
+        if "developer" in group_names or "developers" in group_names:
+            return super().dispatch(request, *args, **kwargs)
+
+        # Testers: can only delete stories they created
+        if "tester" in group_names or "testers" in group_names:
+            if obj.requester == request.user:
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                return HttpResponseForbidden("You can only delete stories that you created.")
+
+        # All other roles
+        return HttpResponseForbidden("You do not have permission to delete stories.")
 @method_decorator(login_required, name="dispatch")
 class EpicDeleteView(DeleteView):
     model = Epic

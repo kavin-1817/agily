@@ -73,7 +73,7 @@
         <div style="min-width: 160px; font-weight:bold; color:#000;">
           <span class="icon"><i class="fas fa-clock"></i></span> Last Update
         </div>
-        <div style="margin-left: 0.5em;">: <time datetime="{{ workspace.updated_at }}">{{ workspace.updated_at }}</time></div>
+        <div style="margin-left: 0.5em;">: {{ workspace.updated_at|date:'Y-m-d' }}</div>
       </div>
       <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
         <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
@@ -176,7 +176,7 @@
                 <input type="checkbox" name="member-{{ user.id }}" />
               </div>
             </td>
-            <td>#{{ user.id }}</td>
+            <td>{{ user.id }}</td>
             <td>
               <strong>{{ user.username }}</strong><br/>
             </td>

@@ -25,11 +25,12 @@ def get_notification_recipients(issue) -> List[str]:
     User = get_user_model()
     recipients: Set[str] = set()
 
-    # 1. Testers
+    # 1. Testers (only if they are the requester or assignee of the issue)
     tester_groups = Group.objects.filter(name__iregex=r"^testers?$")
     testers = User.objects.filter(groups__in=tester_groups, is_active=True).distinct()
     for u in testers:
-        _add(recipients, u)
+        if u == issue.requester or u == issue.assignee:
+            _add(recipients, u)
 
     # 2. Super-admins
     superadmins = User.objects.filter(is_superuser=True, is_active=True)
@@ -343,7 +344,9 @@ def issue_creation_notification(sender, instance: Issue, created: bool, **kwargs
         return
 
     subject = f"[Agily] Issue #{instance.id} has been created"
-    issue_url = f"http://localhost:8000/issues/{instance.id}/"  # Update with your actual URL
+    # Get the workspace slug from the project's workspace
+    workspace_slug = instance.project.workspace.slug
+    issue_url = f"http://192.168.2.222:8080/{workspace_slug}/issues/{instance.id}/"  # Updated URL with workspace slug
     
     send_styled_email(subject, instance, "created", issue_url)
 
@@ -375,6 +378,8 @@ def issue_update_notification(sender, instance: Issue, **kwargs):
         return
 
     subject = f"[Agily] Issue #{instance.id} has been updated"
-    issue_url = f"http://localhost:8000/issues/{instance.id}/"  # Update with your actual URL
+    # Get the workspace slug from the project's workspace
+    workspace_slug = instance.project.workspace.slug
+    issue_url = f"http://192.168.2.222:8080/{workspace_slug}/issues/{instance.id}/"  # Updated URL with workspace slug
     
     send_styled_email(subject, instance, "updated", issue_url)

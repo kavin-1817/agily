@@ -81,7 +81,7 @@
           <div style="min-width: 160px; font-weight:bold; color:#000;">
             <span class="icon"><i class="fas fa-clock"></i></span> Last Update
           </div>
-          <div style="margin-left: 0.5em;">: <span class="datetime-local" data-utc="{{ object.updated_at|date:'c' }}">{{ object.updated_at }}</span></div>
+          <div style="margin-left: 0.5em;">: {{ object.updated_at|date:'Y-m-d' }}</div>
         </div>
         <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
           <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
@@ -199,7 +199,7 @@
                 <input type="checkbox" name="story-{{ story.id }}" />
               
             </td>
-            <td>#{{ story.id }}</td>
+            <td>{{ story.id }}</td>
             <td>
               <a href="{% url 'stories:story-detail' current_workspace story.id %}?next={{ encoded_url }}" {% if story.is_done %}class="has-text-grey-dark"{% endif %}>
                 <strong>{{ story.title }}</strong><br/>

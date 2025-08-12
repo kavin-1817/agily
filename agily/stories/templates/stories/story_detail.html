@@ -33,7 +33,7 @@
         </a>
         {% endif %}
 			</div>
-      {% if user.is_superuser or is_project_admin or is_tester %}
+      {% if user.is_superuser or is_project_admin %}
 			<div class="level-item">
 				<div class="field has-addons">
 					<p class="control">
@@ -103,7 +103,7 @@
         <div style="min-width: 160px; font-weight:bold; color:#000;">
           <span class="icon"><i class="fas fa-clock"></i></span> Last Update
         </div>
-        <div style="margin-left: 0.5em;">: <time datetime="{{ object.updated_at }}">{{ object.updated_at }}</time></div>
+        <div style="margin-left: 0.5em;">: {{ object.updated_at|date:'Y-m-d' }}</div>
       </div>
       <div style="display: flex; align-items: flex-start; margin-top: 1.5em;">
         <div style="min-width: 160px; font-weight:bold; color:#000; margin-top: 0.3em;">
@@ -135,8 +135,7 @@
       </div>
     </div>
     {% if object.attachments.all %}
-    <div class="table-container">
-      <table class="table is-fullwidth is-striped is-hoverable">
+    <table class="table is-fullwidth is-striped is-hoverable">
         <thead>
           <tr>
             <th style="width: 40%;">File</th>

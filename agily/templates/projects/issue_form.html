@@ -98,7 +98,7 @@
               <div style="flex: 1; min-width: 500px; display: flex; justify-content: center;">
                 <div style="display: flex; gap: 1.5em;">
                   <button type="submit" class="button is-primary is-medium" style="border-radius: 8px; min-width: 120px;" {% if no_projects %}disabled{% endif %}>Save</button>
-                  <a href="{{ cancel_url|default:'#' }}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
+                  <a href="{% url 'global-issue-list' %}" class="button is-light is-medium" style="border-radius: 8px; min-width: 120px;">Cancel</a>
                 </div>
               </div>
             </div>

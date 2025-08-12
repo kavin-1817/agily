@@ -118,7 +118,7 @@
                         {{ issue.title }}
                     </a>
                     <span class="recent-meta">
-                        {{ issue.project.name }} • {{ issue.created_at|timesince }} ago
+                        {{ issue.project.name }} • {{ issue.created_at|date:'Y-m-d' }}
                     </span>
                 </div>
                 <div class="recent-status">
@@ -145,7 +145,7 @@
                         {{ story.title }}
                     </a>
                     <span class="recent-meta">
-                        {% if story.project %}{{ story.project.name }}{% endif %} • {{ story.created_at|timesince }} ago
+                        {% if story.project %}{{ story.project.name }}{% endif %} • {{ story.created_at|date:'Y-m-d' }}
                     </span>
                 </div>
                 <div class="recent-status">

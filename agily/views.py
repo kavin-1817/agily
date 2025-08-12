@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q, Case, When, Count, Max, Value, BooleanField
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, FileResponse, Http404
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect, FileResponse, Http404, JsonResponse
 from django.urls import reverse_lazy, reverse
 from django.utils.encoding import smart_str
 from django.utils.decorators import method_decorator
@@ -15,11 +15,98 @@ import json
 import os
 import uuid
 from datetime import datetime
-from .models import Project, Issue, IssueAttachment
-from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm
+from .models import Project, Issue, IssueAttachment, Notification
+from .forms import IssueForm, IssueGlobalForm, ProjectForm, IssueAttachmentForm, IssueAttachmentFormSet, MultiIssueAttachmentForm, NotificationForm
 from agily.workspaces.models import Workspace
 from agily.users.forms import UserRegistrationForm
 import pandas as pd
+
+
+@method_decorator(login_required, name="dispatch")
+class NotificationListView(ListView):
+    model = Notification
+    template_name = "notifications/notification_list.html"
+    context_object_name = "notifications"
+    paginate_by = 10
+    
+    def get_queryset(self):
+        # Get notifications for the current user
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Mark all unread notifications as read
+        unread_notifications = Notification.objects.filter(user=self.request.user, read=False)
+        unread_notifications.update(read=True)
+        return context
+
+
+@method_decorator(login_required, name="dispatch")
+class NotificationCreateView(CreateView):
+    model = Notification
+    form_class = NotificationForm
+    template_name = "notifications/notification_form.html"
+    success_url = reverse_lazy('notification_create')
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Only allow superusers to create notifications
+        if not request.user.is_superuser:
+            messages.error(request, "Only administrators can create notifications.")
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        # Create a notification for all users including the creator
+        message = form.cleaned_data['message']
+        link = form.cleaned_data['link']
+        
+        # Get all users
+        User = get_user_model()
+        users = User.objects.all()
+        
+        # Create a notification for each user
+        for user in users:
+            Notification.objects.create(
+                user=user,
+                message=message,
+                link=link,
+                read=False
+            )
+        
+        messages.success(self.request, "Notification sent to all users successfully.")
+        return redirect('notification_list')
+
+
+@login_required
+def mark_notification_as_read(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.read = True
+    notification.save()
+    return redirect(notification.link) if notification.link else redirect('notification_list')
+
+
+@login_required
+def get_unread_notification_count(request):
+    count = Notification.objects.filter(user=request.user, read=False).count()
+    return JsonResponse({'count': count})
+
+
+@login_required
+def delete_notification(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id)
+    
+    # If a superuser deletes a notification, delete all notifications with the same message and link
+    if request.user.is_superuser:
+        Notification.objects.filter(message=notification.message, link=notification.link).delete()
+        messages.success(request, "Notification deleted for all users successfully.")
+    elif notification.user == request.user:
+        notification.delete()
+        messages.success(request, "Notification deleted successfully.")
+    else:
+        messages.error(request, "You don't have permission to delete this notification.")
+    
+    return redirect('notification_list')
+
 
 class BaseListView(ListView):
     paginate_by = 6
@@ -136,6 +223,15 @@ class ProjectDetailView(DetailView):
     template_name = "projects/project_detail.html"
     context_object_name = "project"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+        # Lists of epics (product backlogs) and sprints for this project
+        context["epics"] = project.epics.all().order_by("-updated_at")
+        context["sprints"] = project.sprints.all().order_by("-updated_at")
+        context["workspace_slug"] = project.workspace.slug if project.workspace_id else None
+        return context
+
     def post(self, request, *args, **kwargs):
         if request.POST.get("remove") == "yes":
             obj = self.get_object()
@@ -213,6 +309,10 @@ class IssueGlobalListView(BaseListView):
         issue_id = self.request.GET.get("id")
         if issue_id:
             qs = qs.filter(id=issue_id)
+            
+        requester_id = self.request.GET.get("requester")
+        if requester_id:
+            qs = qs.filter(requester_id=requester_id)
 
         severity_order = Case(
             When(severity="stopper", then=0),
@@ -246,6 +346,7 @@ class IssueGlobalListView(BaseListView):
         assignees = User.objects.filter(is_active=True, assigned_issues__isnull=False).distinct().order_by("username")
         context["assignees"] = assignees
         context["selected_assignee_id"] = self.request.GET.get("assignee", "")
+        context["selected_project_id"] = self.request.GET.get("project", "")
 
         return context
 
@@ -316,15 +417,20 @@ class IssueGlobalUpdateView(UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        # Allow only superusers, project admins, testers, or developers to edit issues
-        if (request.user.is_superuser or
-            "project admin" in group_names or
-            "tester" in group_names or
-            "testers" in group_names):
+        issue = self.get_object()
+        
+        # Allow superusers and project admins to edit any issue
+        if (request.user.is_superuser or "project admin" in group_names):
             return super().dispatch(request, *args, **kwargs)
+            
+        # Testers can only edit issues they created
+        if ("tester" in group_names or "testers" in group_names):
+            if issue.requester_id == request.user.id:
+                return super().dispatch(request, *args, **kwargs)
+            return HttpResponseForbidden(b"As a tester, you can only edit issues you created.")
 
+        # Developers can only edit issues assigned to them
         if ("developer" in group_names or "developers" in group_names):
-            issue = self.get_object()
             if issue.assignee_id == request.user.id:
                 return super().dispatch(request, *args, **kwargs)
             return HttpResponseForbidden(b"You can only edit issues assigned to you.")
@@ -411,12 +517,18 @@ class IssueGlobalDeleteView(DeleteView):
 
     def dispatch(self, request, *args, **kwargs):
         group_names = [g.name.lower().strip() for g in request.user.groups.all()]
-        # Allow only superusers, project admins, or testers to delete issues
-        if (request.user.is_superuser or
-            "project admin" in group_names or
-            "tester" in group_names or
-            "testers" in group_names):
+        issue = self.get_object()
+        
+        # Allow superusers and project admins to delete any issue
+        if (request.user.is_superuser or "project admin" in group_names):
             return super().dispatch(request, *args, **kwargs)
+            
+        # Testers can only delete issues they created
+        if ("tester" in group_names or "testers" in group_names):
+            if issue.requester_id == request.user.id:
+                return super().dispatch(request, *args, **kwargs)
+            return HttpResponseForbidden(b"As a tester, you can only delete issues you created.")
+
         return HttpResponseForbidden(b"You do not have permission to delete issues.")
 
     def get_success_url(self):

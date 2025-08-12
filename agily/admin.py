@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Project, Issue
+from .models import Project, Issue, Notification
 
 admin.site.site_header = 'Agily Administration'
 admin.site.site_title = 'Agily Administration'
@@ -11,4 +11,12 @@ class IssueAdmin(admin.ModelAdmin):
     search_fields = ("title", "description")
 
 admin.site.register(Project)
-admin.site.register(Issue, IssueAdmin) 
+admin.site.register(Issue, IssueAdmin)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('message', 'user', 'link', 'read', 'created_at')
+    list_filter = ('read', 'created_at', 'user')
+    search_fields = ('message', 'link')
+    list_per_page = 25
+    list_editable = ('read',)
+
+admin.site.register(Notification, NotificationAdmin)

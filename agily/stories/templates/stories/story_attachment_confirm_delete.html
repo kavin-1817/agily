@@ -20,7 +20,7 @@
   <ul>
     <li><strong>File:</strong> {{ attachment.file.name|basename }}</li>
     <li><strong>Description:</strong> {{ attachment.description }}</li>
-    <li><strong>Uploaded:</strong> {{ attachment.created_at }}</li>
+    <li><strong>Uploaded:</strong> {{ attachment.created_at|date:'Y-m-d' }}</li>
   </ul>
   <form method="post" id="confirm-delete-form">
     {% csrf_token %}

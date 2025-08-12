@@ -31,7 +31,7 @@
     <table class="table is-bordered is-striped is-hoverable is-fullwidth">
       <thead>
         <tr>
-          <th>ID</th>
+          <th class="id-cell">ID</th>
           <th>Title</th>
           <th>Start</th>
           <th>End</th>
@@ -43,8 +43,12 @@
       <tbody>
         {% for sprint in object_list %}
           <tr>
-            <td>{{ sprint.id }}</td>
-            <td><b>{{ sprint.title }}</b></td>
+            <td class="id-cell">{{ sprint.id }}</td>
+            <td class="title-cell">
+              <a href="{% url 'sprints:sprint-detail' current_workspace sprint.id %}">
+                <b>{{ sprint.title }}</b>
+              </a>
+            </td>
             <td>{{ sprint.starts_at|date:"Y-m-d" }}</td>
             <td>{{ sprint.ends_at|date:"Y-m-d" }}</td>
             <td>{{ sprint.get_state_display }}</td>

@@ -107,12 +107,19 @@ FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'kingkavin290805@gmail.com'
-EMAIL_HOST_PASSWORD = 'yrdxhiqfhzxblidt'
-EMAIL_USE_TLS = True
+# Email settings are now configured via environment variables
+# Copy config/env.example to config/.env and update with your email settings
+# For production, set DJANGO_EMAIL_BACKEND to 'django.core.mail.backends.smtp.EmailBackend'
+# For development, you can use 'django.core.mail.backends.console.EmailBackend' to see emails in console
+EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="")
+EMAIL_HOST = env("DJANGO_EMAIL_HOST", default="")
+EMAIL_PORT = env.int("DJANGO_EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("DJANGO_EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("DJANGO_EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("DJANGO_EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="")
+EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[agily] ")
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default="")
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -176,6 +183,10 @@ TEMPLATES = [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
+            # Make custom template tag libraries available
+            "libraries": {
+                "text_extras": "agily.templatetags.text_extras",
+            },
             # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-context-processors
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -192,6 +203,8 @@ TEMPLATES = [
                 "agily.context_processors.search",
                 "agily.context_processors.current_workspace",
                 "agily.context_processors.user_roles",
+                "agily.context_processors.dashboard_stats",
+                "agily.context_processors.notifications",
             ],
         },
     },
